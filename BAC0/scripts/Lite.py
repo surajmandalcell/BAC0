@@ -202,7 +202,8 @@ class Lite(
                     "Unable to connect to InfluxDB. Please validate parameters"
                 )
         if self.database:
-            self.create_save_to_influxdb_task(delay=20)
+            write_interval = db_params.get("write_interval", 60)
+            self.create_save_to_influxdb_task(delay=write_interval)
 
         # Announce yourself
 
@@ -226,12 +227,12 @@ class Lite(
     def create_save_to_influxdb_task(self, delay: int = 60) -> None:
         self._write_to_db = RecurringTask(
             self.save_registered_devices_to_db,
-            delay=60,
+            delay=delay,
             name="Write to InfluxDB Task",
         )
         self._write_to_db.start()
 
-    async def save_registered_devices_to_db(self):
+    async def save_registered_devices_to_db(self, delay: int = 60) -> None:
         if len(self.registered_devices) > 0:
             for each in self.registered_devices:
                 try:
@@ -244,7 +245,7 @@ class Lite(
                     self.log(
                         "Write to InfluxDB Task stopped. Restarting", level="warning"
                     )
-                    self.create_save_to_influxdb_task(delay=20)
+                    self.create_save_to_influxdb_task(delay=delay)
 
     def register_device(
         self, device: t.Union[RPDeviceConnected, RPMDeviceConnected]
