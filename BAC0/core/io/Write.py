@@ -29,6 +29,7 @@ from bacpypes3.basetypes import PropertyIdentifier
 from bacpypes3.debugging import ModuleLogger
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import Null, ObjectIdentifier
+from bacpypes3.errors import PropertyError
 
 from BAC0.tasks.DoOnce import DoOnce
 
@@ -124,7 +125,7 @@ class WriteProperty:
             self.log(f"exception: {err!r}", level="error")
             raise ValueError(f"Invalid value for property : {err} | {response}")
 
-        except WritePropertyException as error:
+        except (WritePropertyException, PropertyError) as error:
             # construction error
             self.log(f"exception: {error!r}", level="error")
 
