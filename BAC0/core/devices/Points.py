@@ -429,7 +429,8 @@ class Point:
             or force is not False
         ):
             await self.properties.device.properties.network.sim(
-                f"{self.properties.device.properties.address} {self.properties.type} {self.properties.address} presentValue {value}"
+                f"{self.properties.device.properties.address} {self.properties.type} {self.properties.address} presentValue {value}",
+                vendor_id=self.properties.device.properties.vendor_id,
             )
             self.properties.simulated = (True, value)
 
@@ -779,7 +780,7 @@ class NumericPoint(Point):
                 raise WritePropertyException(f"Problem writing to device : {error}")
 
     def __repr__(self):
-        val = self.lastValue if self.lastValue is not None else "NaN"
+        val = self.lastValue if self.lastValue is not None else float("nan")
         return f"{self.properties.device.properties.name}/{self.properties.name} : {val:.2f} {self.properties.units_state}"
 
     def __add__(self, other):
