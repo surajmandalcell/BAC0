@@ -5,7 +5,6 @@ import pytz
 from ..core.utils.lookfordependency import influxdb_if_available
 from ..core.utils.notes import note_and_log
 
-
 _INFLUX, _ = influxdb_if_available()
 if _INFLUX:
     from influxdb_client import Point, WriteOptions
@@ -99,7 +98,7 @@ class InfluxDB:
         async with InfluxDBClientAsync.from_env_properties() as client:
             if await self._health() is False:
                 self.log("InfluxDB connection is not healthy", level="error")
-                return False
+                return
             query_api = client.query_api()
             records = await query_api.query_stream(query)
             async for record in records:
@@ -170,12 +169,16 @@ class InfluxDB:
         Exception: If an error occurs while pinging the server.
         """
         async with InfluxDBClientAsync.from_env_properties() as client:
-            ready = await client.ping()
-            if ready:
-                self.log("InfluxDB connection is ready", level="debug")
-                return True
-            else:
-                self.log("InfluxDB connection is not ready", level="warning")
+            try:
+                ready = await client.ping()
+                if ready:
+                    self.log("InfluxDB connection is ready", level="debug")
+                    return True
+                else:
+                    self.log("InfluxDB connection is not ready", level="warning")
+                    return False
+            except Exception as error:
+                self.log(f"Error while pinging InfluxDB: {error}", level="error")
                 return False
 
     def clean_value(self, object_type, val, units_state):
