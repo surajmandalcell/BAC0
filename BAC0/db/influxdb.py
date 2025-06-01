@@ -80,6 +80,9 @@ class InfluxDB:
         Exception: If an error occurs while writing to the database.
         """
         async with InfluxDBClientAsync.from_env_properties() as client:
+            if await self._health() is False:
+                self.log("InfluxDB connection is not healthy", level="error")
+                return False
             try:
                 self.log(f"Write called for record: {record}", level="debug")
                 write_api = client.write_api()
@@ -94,6 +97,9 @@ class InfluxDB:
 
     async def query(self, query: str) -> list:
         async with InfluxDBClientAsync.from_env_properties() as client:
+            if await self._health() is False:
+                self.log("InfluxDB connection is not healthy", level="error")
+                return False
             query_api = client.query_api()
             records = await query_api.query_stream(query)
             async for record in records:
@@ -132,6 +138,9 @@ class InfluxDB:
         if bucket is None:
             bucket = self.bucket
         async with InfluxDBClientAsync.from_env_properties() as client:
+            if await self._health() is False:
+                self.log("InfluxDB connection is not healthy", level="error")
+                return False
             try:
                 start = start
                 stop = stop
@@ -163,10 +172,10 @@ class InfluxDB:
         async with InfluxDBClientAsync.from_env_properties() as client:
             ready = await client.ping()
             if ready:
-                self.log("InfluxDB connection is ready", level="info")
+                self.log("InfluxDB connection is ready", level="debug")
                 return True
             else:
-                self.log("InfluxDB connection is not ready", level="error")
+                self.log("InfluxDB connection is not ready", level="warning")
                 return False
 
     def clean_value(self, object_type, val, units_state):
