@@ -45,7 +45,7 @@ class HostIP:
         self.interface = ipaddress.IPv4Interface(f"{ip}/{mask}")
 
     @property
-    def ip_address_subnet(self):
+    def ip_address_subnet(self) -> str:
         """
         IP Address/subnet
         """
@@ -54,7 +54,7 @@ class HostIP:
         )
 
     @property
-    def ip_address(self):
+    def ip_address(self) -> str:
         """
         IP Address/subnet
         """
@@ -77,14 +77,14 @@ class HostIP:
         )
 
     @property
-    def mask(self):
+    def mask(self) -> str:
         """
         Subnet mask
         """
         return self.interface.exploded.split("/")[-1]
 
     @property
-    def port(self):
+    def port(self) -> int:
         """
         IP Port used
         """
@@ -138,7 +138,7 @@ class HostIP:
             )
             return "255.255.255.0"
 
-    def _findSubnetMask(self, ip: str) -> str:
+    def _findSubnetMask(self, ip: str) -> t.Optional[str]:
         """
         Retrieve the broadcast IP address connected to internet... used as
         a default IP address when defining Script
@@ -177,7 +177,7 @@ class HostIP:
         elif platform.system() == "Linux":
             import fcntl
 
-            def get_interface_info(ifname):
+            def get_interface_info(ifname: str) -> bytes:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 return fcntl.ioctl(
                     s.fileno(),

@@ -1,11 +1,13 @@
 import asyncio
+import typing as t
 from signal import SIGINT, SIGTERM, signal
+from typing import Callable, Optional, Coroutine, Any
 
 
-def run(main_task, bacnet):
+def run(main_task: Callable[[], Coroutine[Any, Any, None]], bacnet: Optional[Any]) -> None:
     global loop
 
-    def handler(sig, sig2):
+    def handler(sig: int, sig2: Any) -> None:
         if bacnet is not None:
             bacnet._log.info(f"Got signal: {sig!s}, shutting down.")
             bacnet.disconnect()

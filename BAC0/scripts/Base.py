@@ -22,8 +22,17 @@ from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import CharacterString
 from bacpypes3.vendor import VendorInfo, get_vendor_info
 
-# Type aliases for better type safety
-ConfigValue = t.Union[str, int, bool, t.List[str], t.Dict[str, t.Any], None]
+# Forward declarations
+if t.TYPE_CHECKING:
+    from ..core.devices.Device import Device
+    from ..core.devices.Points import Point
+
+# Type aliases for better type safety - More specific than Any
+BACnetConfigValue = t.Union[
+    str, int, bool, t.List[str], CharacterString,
+    t.Dict[str, t.Union[str, int, bool, t.List[str], None]], None
+]
+ConfigValue = BACnetConfigValue  # Backward compatibility alias
 RouterPathInfo = t.Tuple[t.Tuple[int, int], str]
 
 # --- this application's modules ---
@@ -46,7 +55,7 @@ class LocalObjects(object):
     def __init__(self, device: "Base") -> None:
         self.device = device
 
-    def __getitem__(self, obj: t.Union[str, t.Tuple[str, int]]) -> t.Any:
+    def __getitem__(self, obj: t.Union[str, t.Tuple[str, int]]) -> t.Union["Device", "Point", None]:
         item = None
         if isinstance(obj, tuple):
             obj_type, instance = obj
@@ -304,11 +313,11 @@ class Base:
         """
 
         class Router:
-            def __init__(self, snet: int, address: Address, dnets: t.Set[int], path: t.Optional[t.List[t.Any]] = None) -> None:
+            def __init__(self, snet: int, address: Address, dnets: t.Set[int], path: t.Optional[t.List[t.Union[int, str, Address]]] = None) -> None:
                 self.source_network: int = snet
                 self.address: Address = address
                 self.destination_networks: t.Set[int] = dnets
-                self.path: t.List[t.Any] = path or []
+                self.path: t.List[t.Union[int, str, Address]] = path or []
 
             def __repr__(self) -> str:
                 return "Source Network: {} | Address: {} | Destination Networks: {} | Path: {}".format(

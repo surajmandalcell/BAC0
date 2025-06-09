@@ -8,8 +8,11 @@
 RecurringTask.py - execute a recurring task
 """
 import asyncio
-from typing import Any, Callable, Tuple, Union, Coroutine
+from typing import Callable, Tuple, Union, Coroutine, List, Dict
 from concurrent.futures import ThreadPoolExecutor
+
+# Type aliases for task arguments - More specific than Any
+TaskArgs = Union[Tuple, List, Dict, str, int, float, bool, None]
 
 from ..core.utils.notes import note_and_log
 from .TaskManager import Task
@@ -23,7 +26,7 @@ class RecurringTask(Task):
 
     def __init__(
         self,
-        fnc: Union[Tuple[Callable, Any], Callable, Coroutine],
+        fnc: Union[Tuple[Callable, TaskArgs], Callable, Coroutine],
         delay: int = 60,
         name: str = "recurring",
     ) -> None:

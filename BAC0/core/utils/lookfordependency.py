@@ -1,10 +1,10 @@
 import importlib.util
+import typing as t
 from types import ModuleType
-from typing import Type
 
 
 # Function to dynamically import a module
-def import_module(module_name, package=None):
+def import_module(module_name: str, package: t.Optional[str] = None) -> t.Optional[ModuleType]:
     spec = importlib.util.find_spec(module_name, package)
     if spec is None:
         return None
@@ -13,7 +13,7 @@ def import_module(module_name, package=None):
     return module
 
 
-def check_dependencies(module_name: list) -> bool:
+def check_dependencies(module_name: t.List[str]) -> bool:
     for each in module_name:
         _available = importlib.util.find_spec(each)
         if _available is None:
@@ -21,7 +21,7 @@ def check_dependencies(module_name: list) -> bool:
     return True
 
 
-def rich_if_available():
+def rich_if_available() -> t.Tuple[bool, t.Union[ModuleType, t.Type["FakeRich"]]]:
     if not check_dependencies(["rich"]):
         _RICH = False
         return (_RICH, FakeRich)
@@ -38,7 +38,7 @@ def rich_if_available():
     return (_RICH, rich)
 
 
-def influxdb_if_available():
+def influxdb_if_available() -> t.Tuple[bool, t.Union[ModuleType, t.Type["FakeInflux"]]]:
     if not check_dependencies(["influxdb_client"]):
         _INFLUXDB = False
         return (_INFLUXDB, FakeInflux)
@@ -55,7 +55,7 @@ def influxdb_if_available():
     return (_INFLUXDB, influxdb_client)
 
 
-def pandas_if_available() -> tuple[bool, Type, ModuleType, ModuleType]:
+def pandas_if_available() -> t.Tuple[bool, t.Union[ModuleType, t.Type["FakePandas"]], t.Union[ModuleType, t.Type["FakePandas"]], t.Union[t.Type, t.Type["FakePandas"]]]:
     global _PANDAS
     if not check_dependencies(["pandas"]):
         _PANDAS = False
@@ -82,10 +82,10 @@ class FakePandas:
     class DataFrame:
         id = "fake"
 
-    def sql(self):
+    def sql(self) -> None:
         return None
 
-    def Timestamp(self):
+    def Timestamp(self) -> None:
         return None
 
 

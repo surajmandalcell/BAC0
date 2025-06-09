@@ -22,6 +22,9 @@ from ..Trends import TrendLog
 
 # --- 3rd party modules ---
 
+if t.TYPE_CHECKING:
+    from ..Device import Device
+    from ..Points import Point
 
 # from ...functions.Schedule import Schedule
 
@@ -35,14 +38,14 @@ def retrieve_type(obj_list: t.List[t.Tuple[str, int]], point_type_key: str) -> t
             yield (point_type, point_address)
 
 
-def to_float_if_possible(val: t.Any) -> t.Union[float, t.Any]:
+def to_float_if_possible(val: t.Union[str, int, float]) -> t.Union[float, str, int]:
     try:
         return float(val)
     except ValueError:
         return val
 
 
-def batch_requests(request, points_per_request):
+def batch_requests(request: t.List[str], points_per_request: int) -> t.Iterator[t.List[str]]:
     """
     Generator for creating 'request batches'.  Each batch contains a maximum of "points_per_request"
     points to read.
@@ -58,7 +61,7 @@ class TrendLogCreationException(Exception):
     pass
 
 
-async def create_trendlogs(objList, device):
+async def create_trendlogs(objList: t.List[t.Tuple[str, int]], device: "Device") -> t.Dict[str, t.Tuple[str, TrendLog]]:
     trendlogs = {}
     for each in retrieve_type(objList, "trend-log"):
         point_address = str(each[1])
@@ -114,7 +117,7 @@ class ReadUtilsMixin:
     Handle ReadPropertyMultiple for a device
     """
 
-    def _rpm_request_by_name(self, point_list, property_identifier="presentValue"):
+    def _rpm_request_by_name(self, point_list: t.List[str], property_identifier: str = "presentValue") -> t.Tuple[t.List[str], t.List["Point"]]:
         """
         :param point_list: a list of point
         :returns: (tuple) read request for each points, points
@@ -140,7 +143,7 @@ class DiscoveryUtilsMixin:
     Those functions are used in the process of discovering points in a device
     """
 
-    async def read_objects_list(self, custom_object_list=None):
+    async def read_objects_list(self, custom_object_list: t.Optional[t.List[t.Tuple[str, int]]] = None) -> t.List[t.Tuple[str, int]]:
         if custom_object_list:
             objList = custom_object_list
         else:
@@ -184,7 +187,7 @@ class DiscoveryUtilsMixin:
                     )
         return objList
 
-    async def _discoverPoints(self, custom_object_list=None):
+    async def _discoverPoints(self, custom_object_list: t.Optional[t.List[t.Tuple[str, int]]] = None) -> t.Tuple[t.List[t.Tuple[str, int]], t.List["Point"], t.Dict[str, t.Tuple[str, TrendLog]]]:
         objList = await self.read_objects_list(custom_object_list=custom_object_list)
 
         points = []
@@ -226,7 +229,7 @@ class DiscoveryUtilsMixin:
         self.log("Points and trendlogs (if any) created", level="info")
         return (objList, points, trendlogs)
 
-    async def rp_discovered_values(self, discover_request, points_per_request):
+    async def rp_discovered_values(self, discover_request: t.Tuple[t.List[str], int], points_per_request: int) -> t.List[t.List[t.Union[str, int, float, bool, None]]]:
         values = []
         info_length = discover_request[1]
         big_request = discover_request[0]
@@ -253,8 +256,8 @@ class DiscoveryUtilsMixin:
 
 class RPMObjectsProcessing:
     async def _process_new_objects(
-        self, obj_cls=None, obj_type: str = "", objList=None, points_per_request=5
-    ):
+        self, obj_cls: t.Optional[t.Type["Point"]] = None, obj_type: str = "", objList: t.Optional[t.List[t.Tuple[str, int]]] = None, points_per_request: int = 5
+    ) -> t.List["Point"]:
         """
         Template to generate BAC0 points instances from information coming from the network.
         """
@@ -363,8 +366,8 @@ class RPMObjectsProcessing:
 
 class RPObjectsProcessing:
     async def _process_new_objects(
-        self, obj_cls=NumericPoint, obj_type: str = "analog", objList=None
-    ):
+        self, obj_cls: t.Type["Point"] = NumericPoint, obj_type: str = "analog", objList: t.Optional[t.List[t.Tuple[str, int]]] = None
+    ) -> t.List["Point"]:
         _newpoints = []
         for each in retrieve_type(objList, obj_type):
             point_type = str(each[0])
@@ -575,7 +578,7 @@ class ReadPropertyMultiple(ReadUtilsMixin, DiscoveryUtilsMixin, RPMObjectsProces
                 except KeyError as error:
                     raise Exception(f"Unknown point name : {error}")
 
-    def poll(self, command="start", *, delay=10):
+    def poll(self, command: t.Union[str, bool, int] = "start", *, delay: int = 10) -> None:
         """
         Poll a point every x seconds (delay=x sec)
         Can be stopped by using point.poll('stop') or .poll(0) or .poll(False)
@@ -699,7 +702,7 @@ class ReadProperty(ReadUtilsMixin, DiscoveryUtilsMixin, RPObjectsProcessing):
         except NoResponseFromController:
             return ""
 
-    def poll(self, command="start", *, delay=120):
+    def poll(self, command: t.Union[str, bool, int] = "start", *, delay: int = 120) -> None:
         """
         Poll a point every x seconds (delay=x sec)
         Can be stopped by using point.poll('stop') or .poll(0) or .poll(False)

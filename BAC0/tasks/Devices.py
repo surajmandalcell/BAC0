@@ -7,12 +7,19 @@
 
 # --- standard Python modules ---
 # --- 3rd party modules ---
+import typing as t
 
 from ..core.devices.Device import Device
 from ..core.io.IOExceptions import BadDeviceDefinition
 
 # --- this application's modules ---
 from .TaskManager import Task
+
+# Type aliases for device creation parameters
+DeviceKwargs = t.Union[str, int, bool, t.List, t.Dict, None]
+
+if t.TYPE_CHECKING:
+    from ..scripts.Base import BAC0Application
 
 """
 A way to define a BAC0.device using a task, so it won't block the Notebook or the REPL
@@ -21,7 +28,14 @@ TODO : check if still required, maybe deprecated
 
 
 class AddDevice(Task):
-    def __init__(self, address=None, boid=None, network=None, callback=None, **kwargs):
+    def __init__(
+        self, 
+        address: t.Optional[str] = None, 
+        boid: t.Optional[int] = None, 
+        network: t.Optional["BAC0Application"] = None, 
+        callback: t.Optional[t.Callable[[], None]] = None, 
+        **kwargs: DeviceKwargs
+    ) -> None:
         if network is None:
             raise ValueError("Please provide network")
         else:
@@ -42,7 +56,7 @@ class AddDevice(Task):
         super().__init__(name=name, delay=0)
         # self.start()
 
-    def find_address(self, address, boid):
+    def find_address(self, address: t.Optional[str], boid: t.Optional[int]) -> t.Tuple[str, int]:
         if self.network.discoveredDevices is None:
             self.log(
                 "Device cannot be created yet, use bacnet.discover() or provide both address and Boid",
@@ -62,7 +76,7 @@ class AddDevice(Task):
             level="error",
         )
 
-    def task(self, **kwargs):
+    def task(self, **kwargs: DeviceKwargs) -> None:
         try:
             self.log(kwargs, level="info")
             dev = Device(kwargs)

@@ -56,7 +56,7 @@ class TimeSync:
     """
 
     def time_sync(
-        self, destination: str = None, datetime: DateTime = None, UTC: bool = False
+        self, destination: t.Optional[str] = None, datetime: t.Optional[DateTime] = None, UTC: bool = False
     ) -> None:
         """
         Take local time and send it to devices. User can also provide
@@ -146,7 +146,7 @@ class TimeHandler(object):
     def now(self) -> datetime:
         return dt.datetime.now()
 
-    def local_time(self):
+    def local_time(self) -> dt.time:
         return self.now.time()
 
     def local_date(self) -> datetime.date:
@@ -159,5 +159,5 @@ class TimeHandler(object):
     def is_dst(self) -> bool:
         return self.timezone.dst(self.now) != dt.timedelta(0)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__dict__}"

@@ -1,9 +1,15 @@
 import typing as t
 from collections import namedtuple
 
-# Type aliases for factory functions
-BACnetProperties = t.Dict[str, t.Any]
+# Type aliases for factory functions - More specific than Any
+BACnetPropertyValue = t.Union[
+    str, int, float, bool, t.List[t.Union[str, int, float, bool]], 
+    t.Dict[str, t.Union[str, int, float]], None
+]
+BACnetProperties = t.Dict[str, BACnetPropertyValue]
 BACnetValue = t.Union[int, float, bool, str, None]
+FactoryKwargs = t.Union[str, int, float, bool, t.List[str], BACnetProperties, None]
+BACnetObjectInstance = t.Union["AnalogValueObject", "BinaryInputObject", "BinaryOutputObject", "BinaryValueObject", "MultistateInputObject", "MultistateOutputObject", "MultistateValueObject", "CharacterStringValueObject", "DateValueObject", "DateTimeValueObject", "TrendLogObject"]
 
 from bacpypes3.app import Application
 from bacpypes3.basetypes import Date, DateTime, LogRecord, Polarity, Time, Unsigned
@@ -69,7 +75,7 @@ class ObjectFactory(object):
         "name, objectType, instance, properties, description, presentValue, is_commandable, relinquishDefault",
     )
 
-    objects: t.Dict[str, t.Any] = {}
+    objects: t.Dict[str, BACnetObjectInstance] = {}
     # In the future... should think about a way to store relinquish default values because on a restart
     # those should be restored.
 
@@ -339,21 +345,21 @@ def analog(**kwargs):
     return _create(definition, **kwargs)
 
 
-def analog_input(**kwargs: t.Any) -> "ObjectFactory":
+def analog_input(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AI", **kwargs)
     kwargs["objectType"] = AnalogInputObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
     return analog(**kwargs)
 
 
-def analog_output(**kwargs: t.Any) -> "ObjectFactory":
+def analog_output(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AO", **kwargs)
     kwargs["objectType"] = AnalogOutputObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
     return analog(**kwargs)
 
 
-def analog_value(**kwargs: t.Any) -> "ObjectFactory":
+def analog_value(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AV", **kwargs)
     kwargs["objectType"] = AnalogValueObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
@@ -375,7 +381,7 @@ def binary(**kwargs):
     return _create(definition, **kwargs)
 
 
-def binary_input(**kwargs: t.Any) -> "ObjectFactory":
+def binary_input(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BI", **kwargs)
     kwargs["objectType"] = BinaryInputObject
     try:
@@ -385,7 +391,7 @@ def binary_input(**kwargs: t.Any) -> "ObjectFactory":
     return binary(**kwargs)
 
 
-def binary_output(**kwargs: t.Any) -> "ObjectFactory":
+def binary_output(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BO", **kwargs)
     kwargs["objectType"] = BinaryOutputObject
     try:
@@ -395,7 +401,7 @@ def binary_output(**kwargs: t.Any) -> "ObjectFactory":
     return binary(**kwargs)
 
 
-def binary_value(**kwargs: t.Any) -> "ObjectFactory":
+def binary_value(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BV", **kwargs)
     kwargs["objectType"] = BinaryValueObject
     return binary(**kwargs)
@@ -420,7 +426,7 @@ def multistate(**kwargs):
     return _create(definition, **kwargs)
 
 
-def multistate_input(**kwargs: t.Any) -> "ObjectFactory":
+def multistate_input(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSI", **kwargs)
     kwargs["objectType"] = MultiStateInputObject
     kwargs["relinquishDefault"] = Unsigned(1)
@@ -428,7 +434,7 @@ def multistate_input(**kwargs: t.Any) -> "ObjectFactory":
     return multistate(**kwargs)
 
 
-def multistate_output(**kwargs: t.Any) -> "ObjectFactory":
+def multistate_output(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSO", **kwargs)
     kwargs["objectType"] = MultiStateOutputObject
     kwargs["relinquishDefault"] = Unsigned(1)
@@ -436,7 +442,7 @@ def multistate_output(**kwargs: t.Any) -> "ObjectFactory":
     return multistate(**kwargs)
 
 
-def multistate_value(**kwargs: t.Any) -> "ObjectFactory":
+def multistate_value(**kwargs: FactoryKwargs) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSV", **kwargs)
     kwargs["objectType"] = MultiStateValueObject
     kwargs["relinquishDefault"] = Unsigned(1)

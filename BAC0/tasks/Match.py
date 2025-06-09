@@ -23,6 +23,10 @@ from ..core.io.IOExceptions import NotReadyError
 # --- this application's modules ---
 from .TaskManager import Task
 
+# Forward declarations for specific types
+if t.TYPE_CHECKING:
+    from ..core.devices.Points import Point
+
 # ------------------------------------------------------------------------------
 
 
@@ -32,7 +36,7 @@ class Match(Task):
     Match two properties of a BACnet Object (i.e. a point status with its command).
     """
 
-    def __init__(self, status: t.Any = None, command: t.Any = None, delay: int = 5, name: t.Optional[str] = None) -> None:
+    def __init__(self, status: t.Optional["Point"] = None, command: t.Optional["Point"] = None, delay: int = 5, name: t.Optional[str] = None) -> None:
         self._log.debug(
             f"Creating Match task for {command} and {status}. Delay : {delay}"
         )

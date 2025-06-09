@@ -1,4 +1,5 @@
 import asyncio
+import typing as t
 from typing import List, Optional, Tuple, Union
 
 from bacpypes3.app import Application
@@ -9,6 +10,9 @@ from bacpypes3.pdu import Address, GlobalBroadcast
 from BAC0.core.app.asyncApp import BAC0Application
 
 from ...core.utils.notes import note_and_log
+
+if t.TYPE_CHECKING:
+    from bacpypes3.apdu import IAmRequest, IHaveRequest
 
 ROUTER_TUPLE_TYPE = Union[
     Tuple[Union[Address, str], Union[int, List[int]]],
@@ -23,7 +27,7 @@ class Alias:
     This mixin bring them to the BAC0 app so it's easy to use
     """
 
-    async def who_is(self, address=None, low_limit=0, high_limit=4194303, timeout=3):
+    async def who_is(self, address: t.Optional[str] = None, low_limit: int = 0, high_limit: int = 4194303, timeout: int = 3) -> t.List["IAmRequest"]:
         """
         Build a WhoIs request. WhoIs requests are sent to discover devices on the network.
         If an address is specified, the request is sent to that address. Otherwise,
@@ -50,7 +54,7 @@ class Alias:
         )
         return _iams
 
-    def iam(self, address=None):
+    def iam(self, address: t.Optional[str] = None) -> None:
         """
         Build an IAm response.  IAm are sent in response to a WhoIs request that;
         matches our device ID, whose device range includes us, or is a broadcast.
@@ -67,8 +71,8 @@ class Alias:
         _app.i_am(address=address)
 
     async def whois_router_to_network(
-        self, network=None, *, destination=None, timeout=3, global_broadcast=False
-    ):
+        self, network: t.Optional[int] = None, *, destination: t.Optional[str] = None, timeout: int = 3, global_broadcast: bool = False
+    ) -> t.List[int]:
         """
         Send a Who-Is-Router-To-Network request. This request is used to discover routers
         on the network that can route messages to a specific network.
@@ -105,7 +109,7 @@ class Alias:
             )
             return []
 
-    async def init_routing_table(self, address=None):
+    async def init_routing_table(self, address: t.Optional[str] = None) -> None:
         """
         irt <addr>
 
@@ -159,7 +163,7 @@ class Alias:
         else:
             self._log.warning(f"Router not found at {address}")
 
-    async def what_is_network_number(self, destination=None, timeout=3):
+    async def what_is_network_number(self, destination: t.Optional[str] = None, timeout: int = 3) -> t.Optional[int]:
         """
         winn [ <addr> ]
 
@@ -186,13 +190,13 @@ class Alias:
 
     async def whohas(
         self,
-        object_id=None,
-        object_name=None,
-        low_limit=0,
-        high_limit=4194303,
-        destination=None,
-        timeout=5,
-    ):
+        object_id: t.Optional[str] = None,
+        object_name: t.Optional[str] = None,
+        low_limit: int = 0,
+        high_limit: int = 4194303,
+        destination: t.Optional[str] = None,
+        timeout: int = 5,
+    ) -> t.List["IHaveRequest"]:
         """
         Build a WhoHas request.
 

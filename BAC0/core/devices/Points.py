@@ -40,6 +40,7 @@ _PANDAS, pd, sql, Timestamp = pandas_if_available()
 BACnetValue = t.Union[float, int, bool, str, None]
 UnitsState = t.Union[str, t.List[str], t.Tuple[str, ...], None]
 PointTag = t.Union[str, int, float, bool]
+PointPropertyValue = t.Union[str, int, float, bool, t.List, t.Dict, BACnetValue, UnitsState, None]
 
 # Forward declaration for device type
 if t.TYPE_CHECKING:
@@ -71,7 +72,7 @@ class PointProperties(object):
         return f"{self.asdict}"
 
     @property
-    def asdict(self) -> t.Dict[str, t.Any]:
+    def asdict(self) -> t.Dict[str, PointPropertyValue]:
         return self.__dict__
 
 

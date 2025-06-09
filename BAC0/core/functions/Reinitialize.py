@@ -8,6 +8,8 @@
 Reinitialize.py - creation of ReinitializeDeviceRequest
 
 """
+import typing as t
+
 from bacpypes3.apdu import (
     ReinitializeDeviceRequest,
     ReinitializeDeviceRequestReinitializedStateOfDevice,
@@ -32,7 +34,7 @@ class Reinitialize:
     Mixin to support Reinitialize from BAC0 to other devices
     """
 
-    def reinitialize(self, address=None, password=None, state="coldstart"):
+    def reinitialize(self, address: t.Optional[str] = None, password: t.Optional[str] = None, state: str = "coldstart") -> None:
         """
         Will send reinitialize request
         """

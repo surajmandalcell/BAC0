@@ -13,6 +13,9 @@ import typing as t
 from ..core.utils.notes import note_and_log
 from .TaskManager import OneShotTask
 
+# Type aliases for better specificity
+CallableArgs = t.List[t.Union[str, int, float, bool]]
+
 
 @note_and_log
 class DoOnce(OneShotTask):
@@ -22,7 +25,7 @@ class DoOnce(OneShotTask):
         device['point_name'].poll(delay=60)
     """
 
-    def __init__(self, fnc: t.Union[t.Callable, t.Tuple[t.Callable, t.List[t.Any]]], name: str = "do_once") -> None:
+    def __init__(self, fnc: t.Union[t.Callable, t.Tuple[t.Callable, CallableArgs]], name: str = "do_once") -> None:
         """
         :param point: (BAC0.core.device.Points.Point) name of the point to read
         :param delay: (int) Delay between reads in seconds, defaults = 10sec
@@ -41,7 +44,7 @@ class DoOnce(OneShotTask):
         else:
             raise ValueError("You must pass a function to this...")
 
-    async def task(self):
+    async def task(self) -> None:
         if self.fnc_args:
             if asyncio.iscoroutinefunction(self.func):
                 self._log.debug(

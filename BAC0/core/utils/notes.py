@@ -58,8 +58,8 @@ def convert_level(level: t.Union[str, int, None]) -> t.Optional[int]:
 
 
 def update_log_level(
-    level=None, *, log_file=None, stderr=None, stdout=None, log_this=True
-):
+    level: t.Optional[t.Union[str, int]] = None, *, log_file: t.Optional[t.Union[str, int]] = None, stderr: t.Optional[t.Union[str, int]] = None, stdout: t.Optional[t.Union[str, int]] = None, log_this: bool = True
+) -> None:
     """
     Typical usage ::
         # Silence (use CRITICAL so not much messages will be sent)
@@ -157,7 +157,7 @@ def update_log_level(
                     )
 
 
-def note_and_log(cls):
+def note_and_log(cls: t.Type) -> t.Type:
     """
     This will be used as a decorator on class to activate
     logging and store messages in the variable cls._notes
@@ -231,7 +231,7 @@ def note_and_log(cls):
 
     LogList.LOGGERS.append(cls._log)
 
-    def log_title(self, title, args=None, width=35):
+    def log_title(self, title: str, args: t.Optional[t.Union[str, t.Dict, t.List]] = None, width: int = 35) -> None:
         cls._log.debug("")
         cls._log.debug("#" * width)
         cls._log.debug(f"# {title}")
@@ -240,7 +240,7 @@ def note_and_log(cls):
             cls._log.debug(f"{args!r}")
             cls._log.debug("#" * 35)
 
-    def log_subtitle(self, subtitle, args=None, width=35):
+    def log_subtitle(self, subtitle: str, args: t.Optional[t.Union[str, t.Dict, t.List]] = None, width: int = 35) -> None:
         cls._log.debug("")
         cls._log.debug("=" * width)
         cls._log.debug(f"{subtitle}")
@@ -249,7 +249,7 @@ def note_and_log(cls):
             cls._log.debug(f"{args!r}")
             cls._log.debug("=" * width)
 
-    def log(self, note, *, level: t.Union[str, int] = logging.DEBUG):
+    def log(self, note: str, *, level: t.Union[str, int] = logging.DEBUG) -> None:
         """
         Add a log entry...no note
         """
@@ -266,7 +266,7 @@ def note_and_log(cls):
             note = f"{cls.logname} | {module_name} | {note}"
         cls._log.log(level, note)
 
-    def note(self, note, *, level=logging.INFO, log=True):
+    def note(self, note: str, *, level: int = logging.INFO, log: bool = True) -> None:
         """
         Add note to the object. By default, the note will also
         be logged
@@ -283,7 +283,7 @@ def note_and_log(cls):
             cls.log(level, note)
 
     @property
-    def notes(self):
+    def notes(self) -> t.Union[t.Dict[datetime, str], "pd.Series"]:
         """
         Retrieve notes list as a Pandas Series
         """
@@ -291,7 +291,7 @@ def note_and_log(cls):
             return dict(zip(self._notes.timestamp, self._notes.notes))
         return pd.Series(self._notes.notes, index=self._notes.timestamp)
 
-    def clear_notes(self):
+    def clear_notes(self) -> None:
         """
         Clear notes object
         """

@@ -25,6 +25,12 @@ from ..core.io.IOExceptions import (
 from ..core.utils.lookfordependency import pandas_if_available
 
 _PANDAS, pd, sql, Timestamp = pandas_if_available()
+
+# Type aliases for SQL operations - More specific than Any
+SQLRowValue = t.Union[str, int, float, bool, None]  # SQLite supported types
+SQLRow = t.Dict[str, SQLRowValue]
+SQLResult = t.List[SQLRow]
+
 # --- this application's modules ---
 
 # ------------------------------------------------------------------------------
@@ -37,7 +43,7 @@ class SQLMixin(object):
     is not available.
     """
 
-    async def _read_from_sql(self, request: str, db_name: str) -> t.Any:
+    async def _read_from_sql(self, request: str, db_name: str) -> t.Union["pd.DataFrame", SQLResult, None]:
         """
         Using the contextlib, I hope to close the connection to database when
         not in use

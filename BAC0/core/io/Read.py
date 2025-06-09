@@ -62,6 +62,10 @@ from BAC0.core.app.asyncApp import BAC0Application
 
 from ..utils.notes import note_and_log
 
+# Type aliases for read operations
+BACnetReadValue = t.Union[str, int, float, bool, None]
+RangeParams = t.List[t.Union[int, str]]
+
 # --- this application's modules ---
 from .IOExceptions import (
     ApplicationNotStarted,
@@ -228,7 +232,7 @@ class ReadProperty:
         timeout: int = 10,
         show_property_name: bool = False,
         from_regex=False,
-    ) -> t.Union[t.Dict, t.List[t.Tuple[t.Any, str]]]:
+    ) -> t.Union[t.Dict[str, BACnetReadValue], t.List[t.Tuple[BACnetReadValue, str]]]:
         """Build a ReadPropertyMultiple request, wait for the answer and return the values
 
         :param args: String with <addr> ( <type> <inst> ( <prop> [ <indx> ] )... )...
@@ -615,12 +619,12 @@ class ReadProperty:
     async def readRange(
         self,
         args: str,
-        range_params: t.Optional[t.List[t.Any]] = None,
+        range_params: t.Optional[RangeParams] = None,
         arr_index: t.Optional[int] = None,
         vendor_id: int = 0,
         bacoid: t.Optional[int] = None,
         timeout: int = 10,
-    ) -> t.Any:
+    ) -> BACnetReadValue:
         """
         Build a ReadRangeRequest request, wait for the answer and return the value
 

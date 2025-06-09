@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 
 from bacpypes3.app import Application
 from bacpypes3.basetypes import BDTEntry, HostNPort
@@ -9,15 +9,19 @@ from ...core.utils.notes import note_and_log
 
 
 @note_and_log
+# Type aliases for application configuration - More specific than Any
+ApplicationConfigValue = Union[str, int, bool, List[str], Dict[str, Union[str, int, bool]]]
+ApplicationConfig = Dict[str, ApplicationConfigValue]
+
 class BAC0Application:
     _learnedNetworks: Set = set()
-    _cfg: Optional[Dict[str, Any]] = None
+    _cfg: Optional[ApplicationConfig] = None
 
     def __init__(
-        self, cfg: Dict[str, Any], addr: str, json_file: Optional[str] = None
+        self, cfg: ApplicationConfig, addr: str, json_file: Optional[str] = None
     ) -> None:
         self._cfg = cfg
-        self.cfg: Dict[str, Any] = self.update_config(cfg, json_file)
+        self.cfg: ApplicationConfig = self.update_config(cfg, json_file)
         self.localIPAddr: str = addr
         self.bdt: List[str] = self._cfg["BAC0"]["bdt"]
         self.device_cfg, self.networkport_cfg = self.cfg["application"]
@@ -47,8 +51,8 @@ class BAC0Application:
         self.app.unregister()
 
     def update_config(
-        self, cfg: Dict[str, Any], json_file: Optional[str]
-    ) -> Dict[str, Any]:
+        self, cfg: ApplicationConfig, json_file: Optional[str]
+    ) -> ApplicationConfig:
         if json_file is None:
             if os.path.exists(
                 os.path.join(os.path.expanduser("~"), ".BAC0", "device.json")

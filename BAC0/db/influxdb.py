@@ -47,7 +47,7 @@ class InfluxDB:
     password: t.Optional[str] = None
     client: InfluxDBClientAsync
 
-    def __init__(self, params: t.Dict[str, t.Any]) -> None:
+    def __init__(self, params: t.Dict[str, t.Union[str, int, bool]]) -> None:
         for k, v in params.items():
             setattr(self, k, v)
         if self.bucket is None:

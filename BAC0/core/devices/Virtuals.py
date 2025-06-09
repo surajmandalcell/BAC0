@@ -10,6 +10,7 @@ Points.py - Definition of points so operations on Read results are more convenie
 
 import asyncio
 import hashlib
+import typing as t
 from collections import namedtuple
 
 
@@ -25,6 +26,14 @@ from ..utils.notes import note_and_log
 from ..utils.lookfordependency import pandas_if_available
 
 _PANDAS, pd, _, _ = pandas_if_available()
+
+# Type aliases for virtual devices
+VirtualValue = t.Union[int, float, bool, str, None]
+VirtualProperties = t.Dict[str, t.Union[str, int, bool, None]]
+
+if t.TYPE_CHECKING:
+    from ..Points import Point
+
 # ------------------------------------------------------------------------------
 
 
@@ -33,30 +42,30 @@ class VirtualDeviceProperties(object):
     This serves as a container for device properties
     """
 
-    def __init__(self):
-        self.name = "Virtual Device"
-        self.address = "local"
-        self.device_id = None
-        self.network = None
-        self.pollDelay = None
-        self.objects_list = None
-        self.pss = None
-        self.multistates = None
-        self.db_name = None
-        self.segmentation_supported = True
-        self.history_size = None
-        self.bacnet_properties = None
+    def __init__(self) -> None:
+        self.name: str = "Virtual Device"
+        self.address: str = "local"
+        self.device_id: t.Optional[int] = None
+        self.network: t.Optional[t.Any] = None
+        self.pollDelay: t.Optional[int] = None
+        self.objects_list: t.Optional[t.List] = None
+        self.pss: t.Optional[t.Any] = None
+        self.multistates: t.Optional[t.Dict] = None
+        self.db_name: t.Optional[str] = None
+        self.segmentation_supported: bool = True
+        self.history_size: t.Optional[int] = None
+        self.bacnet_properties: t.Optional[VirtualProperties] = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.asdict}"
 
     @property
-    def asdict(self):
+    def asdict(self) -> VirtualProperties:
         return self.__dict__
 
 
 class VirtualDevice(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.properties = VirtualDeviceProperties()
 
 

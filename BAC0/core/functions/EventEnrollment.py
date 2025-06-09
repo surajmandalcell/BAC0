@@ -1,3 +1,5 @@
+import typing as t
+
 from bacpypes3.apdu import WritePropertyRequest
 from bacpypes3.app import Application
 from bacpypes3.basetypes import DeviceObjectPropertyReference, EventParameter
@@ -10,8 +12,8 @@ from BAC0.core.app.asyncApp import BAC0Application
 # this class follows the same design as schedule/calendar
 class EventEnrollment:
     def __make_event_parameters_request(
-        self, destination, object_instance, event_parameters
-    ):
+        self, destination: str, object_instance: int, event_parameters: EventParameter
+    ) -> WritePropertyRequest:
         request = WritePropertyRequest(
             objectIdentifier=("eventEnrollment", object_instance),
             propertyIdentifier="eventParameters",
@@ -24,7 +26,7 @@ class EventEnrollment:
         request.priority = 15
         return request
 
-    def __send_event_parameters_request(self, request, timeout=10):
+    def __send_event_parameters_request(self, request: WritePropertyRequest, timeout: int = 10) -> None:
         _this_application: BAC0Application = self.this_application
         _app: Application = _this_application.app
 
@@ -38,8 +40,8 @@ class EventEnrollment:
 
     # external interface
     def write_event_parameters(
-        self, destination, event_enrollment_instance, event_parameters
-    ):
+        self, destination: str, event_enrollment_instance: int, event_parameters: EventParameter
+    ) -> None:
         if type(event_parameters) is not EventParameter:
             self.log.warning("Data is not of type EventParameter.")
             return
@@ -51,7 +53,7 @@ class EventEnrollment:
         )
         self.__send_event_parameters_request(request)
 
-    def __make_obj_prop_ref_request(self, destination, object_instance, obj_prop_ref):
+    def __make_obj_prop_ref_request(self, destination: str, object_instance: int, obj_prop_ref: DeviceObjectPropertyReference) -> WritePropertyRequest:
         request = WritePropertyRequest(
             objectIdentifier=("eventEnrollment", object_instance),
             propertyIdentifier="objectPropertyReference",
@@ -64,7 +66,7 @@ class EventEnrollment:
         request.priority = 15
         return request
 
-    def __send_obj_prop_ref_request(self, request, timeout=10):
+    def __send_obj_prop_ref_request(self, request: WritePropertyRequest, timeout: int = 10) -> None:
         _this_application: BAC0Application = self.this_application
         _app: Application = _this_application.app
 
@@ -77,7 +79,7 @@ class EventEnrollment:
         )
 
     # external interface
-    def write_obj_prop_ref(self, destination, event_enrollment_instance, obj_prop_ref):
+    def write_obj_prop_ref(self, destination: str, event_enrollment_instance: int, obj_prop_ref: DeviceObjectPropertyReference) -> None:
         if type(obj_prop_ref) is not DeviceObjectPropertyReference:
             self.log.warning("Data is not of type ObjectPropertyReference.")
             return

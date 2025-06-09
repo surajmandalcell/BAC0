@@ -70,10 +70,10 @@ class Task(object):
         self._task = None
         self.aio_task = None
 
-    async def task(self):
+    async def task(self) -> None:
         raise NotImplementedError("Must be implemented")
 
-    async def execute(self):
+    async def execute(self) -> None:
         if self.delay > 0:
             self.log(
                 f"Installing recurring task {self.name} (id:{self.id})", level="info"
@@ -140,11 +140,11 @@ class Task(object):
                 else:
                     await self.task()
 
-    def start(self):
+    def start(self) -> None:
         self.aio_task = asyncio.create_task(self.execute(), name=f"aio{self.name}")
         Task.tasks.append(self)
 
-    def stop(self):
+    def stop(self) -> t.Optional[bool]:
         for each in Task.tasks:
             if each.id == self.id:
                 each.aio_task.cancel()
@@ -152,30 +152,30 @@ class Task(object):
                 return True
 
     @property
-    def done(self):
+    def done(self) -> bool:
         if self.aio_task is not None:
             return self.aio_task.done()
         else:
             return False
 
     @property
-    def last_time(self):
+    def last_time(self) -> str:
         return time.strftime(
             "%Y-%m-%d %H:%M:%S", time.localtime(self.previous_execution)
         )
 
     @property
-    def next_time(self):
+    def next_time(self) -> str:
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.next_execution))
 
     @property
-    def latency(self):
+    def latency(self) -> str:
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.average_latency))
 
-    def is_alive(self):
+    def is_alive(self) -> None:
         return
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "{:<40} | Avg exec delay : {:.2f} sec | Avg latency : {:.2f} sec | last executed : {} | Next Time : {}".format(
             self.name,
             self.average_execution_delay,
@@ -184,11 +184,11 @@ class Task(object):
             self.next_time,
         )
 
-    def __lt__(self, other):
+    def __lt__(self, other: "Task") -> bool:
         # list sort use __lt__... little cheat to reverse list already
         return self.next_execution > other.next_execution
 
-    def __eq__(self, other):
+    def __eq__(self, other: t.Union["Task", int]) -> bool:
         # list remove use __eq__... so compare with id
         if isinstance(other, Task):
             return self.id == other.id
@@ -198,5 +198,5 @@ class Task(object):
 
 @note_and_log
 class OneShotTask(Task):
-    def __init__(self, fn=None, args=None, name="Oneshot"):
+    def __init__(self, fn: t.Optional[t.Callable] = None, args: t.Optional[t.Union[t.List, t.Tuple, str, int]] = None, name: str = "Oneshot") -> None:
         super().__init__(name=name, delay=0)

@@ -48,6 +48,9 @@ from .IOExceptions import (
 # some debugging
 _debug: int = 0
 _LOG: ModuleLogger = ModuleLogger(globals())
+# Type aliases for write operations
+BACnetWriteValue = t.Union[str, int, float, bool, None]
+
 WRITE_REGEX: str = r"(?P<address>\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d+)?\b|(\b\d+:\d+\b)) (?P<objId>(@obj_)?[-\w:]*[: ]*\d*) (?P<propId>(@prop_)?\w*(-\w*)?)[ ]?(?P<value>-?[\w\d]*\.?\d*)?[ ]?(?P<indx>-|\d*)?[ ]?(?P<priority>(1[0-6]|[0-9]))?"
 write_pattern: t.Pattern[str] = re.compile(WRITE_REGEX)
 
@@ -170,7 +173,7 @@ class WriteProperty:
 
         return (address, obj_type, obj_inst, prop_id, value, priority, indx)
 
-    def build_wp_request(self, args: str, vendor_id: int = 0) -> t.Tuple[Address, ObjectIdentifier, PropertyIdentifier, t.Any, t.Optional[int], t.Optional[int]]:
+    def build_wp_request(self, args: str, vendor_id: int = 0) -> t.Tuple[Address, ObjectIdentifier, PropertyIdentifier, BACnetWriteValue, t.Optional[int], t.Optional[int]]:
         vendor_id = vendor_id
         (
             address,

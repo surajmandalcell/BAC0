@@ -11,7 +11,7 @@ from datetime import time as dt_time
 
 # Type aliases for schedule functionality
 ScheduleDict = t.Dict[str, t.Union[t.Dict[str, int], t.Dict[str, t.List[t.Tuple[str, str]]]]]
-DailyScheduleList = t.List[t.Tuple[str, t.Any]]
+DailyScheduleList = t.List[t.Tuple[str, t.Union[str, float, int, None]]]
 StateMap = t.Dict[str, int]
 
 from bacpypes3.apdu import WritePropertyRequest
@@ -111,7 +111,7 @@ class Schedule:
             daily_schedules.append(DailySchedule(daySchedule=_daily_schedule))
         return Schedule.WeeklySchedule(daily_schedules)
 
-    def make_weeklySchedule_request(self, destination, object_instance, weeklySchedule):
+    def make_weeklySchedule_request(self, destination: str, object_instance: int, weeklySchedule: "Schedule.WeeklySchedule") -> WritePropertyRequest:
         request = WritePropertyRequest(
             objectIdentifier=("schedule", object_instance),
             propertyIdentifier="weeklySchedule",
@@ -123,7 +123,7 @@ class Schedule:
         request.priority = 15
         return request
 
-    def send_weeklyschedule_request(self, request, timeout=10):
+    def send_weeklyschedule_request(self, request: WritePropertyRequest, timeout: int = 10) -> None:
         _this_application: BAC0Application = self.this_application
         _app: Application = _this_application.app
 
@@ -135,7 +135,7 @@ class Schedule:
             f"Schedule Write request sent to device : {request.pduDestination}"
         )
 
-    def write_weeklySchedule(self, destination, schedule_instance, schedule):
+    def write_weeklySchedule(self, destination: str, schedule_instance: int, schedule: ScheduleDict) -> None:
         weeklyschedule = self.create_weeklySchedule(schedule)
         request = self.make_weeklySchedule_request(
             destination=destination,
@@ -144,7 +144,7 @@ class Schedule:
         )
         self.send_weeklyschedule_request(request)
 
-    async def read_weeklySchedule(self, address, schedule_instance):
+    async def read_weeklySchedule(self, address: str, schedule_instance: int) -> t.Dict[str, t.Union[t.Dict, t.List, str, int, None]]:
         """
         This function will turn the weeklySchedule received into a
         human readable dict.
@@ -249,13 +249,13 @@ class Schedule:
 
         return schedule
 
-    def decode_weeklySchedule(self, weeklySchedule, states, offset_MV):
+    def decode_weeklySchedule(self, weeklySchedule: "Schedule.WeeklySchedule", states: t.Union[str, t.List[str], range], offset_MV: int) -> t.Dict[str, DailyScheduleList]:
         week = {}
         for i, day in enumerate(Schedule.days):
             week[day] = self.decode_dailySchedule(weeklySchedule[i], states, offset_MV)
         return week
 
-    def decode_dailySchedule(self, dailySchedule, states, offset_MV):
+    def decode_dailySchedule(self, dailySchedule: DailySchedule, states: t.Union[str, t.List[str], range], offset_MV: int) -> DailyScheduleList:
         events = []
         for each in dailySchedule.daySchedule:
             hour, minute, second, hundreth = each.time

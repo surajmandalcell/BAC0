@@ -38,7 +38,7 @@ class Calendar:
         ],
     }
 
-    def create_calendar(self, dict_calendar):
+    def create_calendar(self, dict_calendar: t.Dict[str, t.List[t.Dict[str, t.Union[str, bool]]]]) -> "Calendar.DateList":
         """
         From a structured dict (see dateList_example), create a DateList
         an ArrayOf(CalendarEntry)
@@ -81,7 +81,7 @@ class Calendar:
         dateList = self.DateList(entries)
         return dateList
 
-    def make_calendar_request(self, destination, object_instance, dateList):
+    def make_calendar_request(self, destination: str, object_instance: int, dateList: "Calendar.DateList") -> WritePropertyRequest:
         request = WritePropertyRequest(
             objectIdentifier=("calendar", object_instance),
             propertyIdentifier="dateList",
@@ -93,7 +93,7 @@ class Calendar:
         request.propertyValue.cast_in(dateList)
         return request
 
-    def send_calendar_request(self, request, timeout=10):
+    def send_calendar_request(self, request: WritePropertyRequest, timeout: int = 10) -> None:
         _this_application: BAC0Application = self.this_application
         _app: Application = _this_application.app
 
@@ -105,7 +105,7 @@ class Calendar:
             f"Calendar Write request sent to device : {request.pduDestination}"
         )
 
-    def write_calendar_dateList(self, destination, calendar_instance, dates):
+    def write_calendar_dateList(self, destination: str, calendar_instance: int, dates: t.Dict[str, t.List[t.Dict[str, t.Union[str, bool]]]]) -> None:
         calendar = self.create_calendar(dates)
         request = self.make_calendar_request(
             destination=destination,
@@ -114,7 +114,7 @@ class Calendar:
         )
         self.send_calendar_request(request)
 
-    async def read_calendar_dateList(self, address, calendar_instance):
+    async def read_calendar_dateList(self, address: str, calendar_instance: int) -> t.Dict[str, t.List[t.Dict[str, t.Union[str, bool]]]]:
         """
         This function will read the dateList property of given calendar object and
         pass it to decode_dateList() to convert it into a human readable dict.
@@ -131,7 +131,7 @@ class Calendar:
 
         return dict_calendar
 
-    def decode_dateList(self, dateList_object) -> t.Dict[str, t.List[t.Dict]]:
+    def decode_dateList(self, dateList_object: "Calendar.DateList") -> t.Dict[str, t.List[t.Dict[str, t.Union[str, bool]]]]:
         dict_calendar = {"dates": [], "dateRanges": []}
         for entry in dateList_object:
             entry_dict: t.Dict[str, t.Union[str, bool]] = {}

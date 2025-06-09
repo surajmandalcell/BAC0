@@ -7,6 +7,8 @@
 """
 IOExceptions.py - BAC0 application level exceptions 
 """
+import typing as t
+from typing import Optional
 
 
 class WritePropertyException(Exception):
@@ -14,7 +16,8 @@ class WritePropertyException(Exception):
     This exception is used when trying to write a property.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class WritePropertyCastError(Exception):
@@ -22,15 +25,18 @@ class WritePropertyCastError(Exception):
     This exception is used when trying to write to a property and a cast error occurs.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class UnknownPropertyError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class UnknownObjectError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class ReadPropertyException(ValueError):
@@ -38,7 +44,8 @@ class ReadPropertyException(ValueError):
     This exception is used when trying to read a property.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class ReadPropertyMultipleException(ValueError):
@@ -46,7 +53,8 @@ class ReadPropertyMultipleException(ValueError):
     This exception is used when trying to read multiple properties.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class ReadRangeException(ValueError):
@@ -54,7 +62,8 @@ class ReadRangeException(ValueError):
     This exception is used when trying to read a property.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class NoResponseFromController(Exception):
@@ -62,7 +71,8 @@ class NoResponseFromController(Exception):
     This exception is used when trying to read or write and there is not answer.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class UnrecognizedService(Exception):
@@ -70,7 +80,8 @@ class UnrecognizedService(Exception):
     This exception is used when trying to read or write and there is not answer.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class WriteAccessDenied(Exception):
@@ -78,11 +89,13 @@ class WriteAccessDenied(Exception):
     This exception is used when trying to write and controller refuse it.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class APDUError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class OutOfServiceNotSet(Exception):
@@ -90,7 +103,8 @@ class OutOfServiceNotSet(Exception):
     This exception is used when trying to simulate a point and the out of service property is false.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class OutOfServiceSet(Exception):
@@ -99,7 +113,8 @@ class OutOfServiceSet(Exception):
     false to release the simulation...and it doesn't work.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class NetworkInterfaceException(Exception):
@@ -108,7 +123,8 @@ class NetworkInterfaceException(Exception):
     or subnet mask...)
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class ApplicationNotStarted(Exception):
@@ -116,7 +132,8 @@ class ApplicationNotStarted(Exception):
     Application not started, no communication available.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class BokehServerCantStart(Exception):
@@ -124,23 +141,28 @@ class BokehServerCantStart(Exception):
     Raised if Bokeh Server can't be started automatically
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class SegmentationNotSupported(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class BadDeviceDefinition(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class InitializationError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class Timeout(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class RemovedPointException(Exception):
@@ -149,7 +171,8 @@ class RemovedPointException(Exception):
     actual device.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class BufferOverflow(Exception):
@@ -157,25 +180,31 @@ class BufferOverflow(Exception):
     Buffer capacity of device exceeded.
     """
 
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 # For devices
 class DeviceNotConnected(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class WrongParameter(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class NumerousPingFailures(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class NotReadyError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
 
 
 class DataError(Exception):
-    pass
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
