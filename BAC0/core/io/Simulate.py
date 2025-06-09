@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# type: ignore
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 by Christian Tremblay, P.Eng <christian.tremblay@servisys.com>
@@ -8,6 +7,7 @@
 """
 Simulate.py - simulate the value of controller I/O values
 """
+import typing as t
 
 from bacpypes3.app import Application
 
@@ -32,7 +32,7 @@ class Simulation:
     Global informations regarding simulation
     """
 
-    async def sim(self, args):
+    async def sim(self, args: str) -> None:
         """
         Simulate I/O points by setting the Out_Of_Service property, then doing a
         WriteProperty to the point's Present_Value.

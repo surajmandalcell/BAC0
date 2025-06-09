@@ -1,6 +1,10 @@
 import typing as t
 from collections import namedtuple
 
+# Type aliases for factory functions
+BACnetProperties = t.Dict[str, t.Any]
+BACnetValue = t.Union[int, float, bool, str, None]
+
 from bacpypes3.app import Application
 from bacpypes3.basetypes import Date, DateTime, LogRecord, Polarity, Time, Unsigned
 from bacpypes3.constructeddata import ArrayOf, ListOf
@@ -335,21 +339,21 @@ def analog(**kwargs):
     return _create(definition, **kwargs)
 
 
-def analog_input(**kwargs):
+def analog_input(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AI", **kwargs)
     kwargs["objectType"] = AnalogInputObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
     return analog(**kwargs)
 
 
-def analog_output(**kwargs):
+def analog_output(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AO", **kwargs)
     kwargs["objectType"] = AnalogOutputObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
     return analog(**kwargs)
 
 
-def analog_value(**kwargs):
+def analog_value(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "AV", **kwargs)
     kwargs["objectType"] = AnalogValueObject
     kwargs["instance"] = set_default_if_not_provided("instance", 0, **kwargs)
@@ -371,7 +375,7 @@ def binary(**kwargs):
     return _create(definition, **kwargs)
 
 
-def binary_input(**kwargs):
+def binary_input(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BI", **kwargs)
     kwargs["objectType"] = BinaryInputObject
     try:
@@ -381,7 +385,7 @@ def binary_input(**kwargs):
     return binary(**kwargs)
 
 
-def binary_output(**kwargs):
+def binary_output(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BO", **kwargs)
     kwargs["objectType"] = BinaryOutputObject
     try:
@@ -391,7 +395,7 @@ def binary_output(**kwargs):
     return binary(**kwargs)
 
 
-def binary_value(**kwargs):
+def binary_value(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "BV", **kwargs)
     kwargs["objectType"] = BinaryValueObject
     return binary(**kwargs)
@@ -416,7 +420,7 @@ def multistate(**kwargs):
     return _create(definition, **kwargs)
 
 
-def multistate_input(**kwargs):
+def multistate_input(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSI", **kwargs)
     kwargs["objectType"] = MultiStateInputObject
     kwargs["relinquishDefault"] = Unsigned(1)
@@ -424,7 +428,7 @@ def multistate_input(**kwargs):
     return multistate(**kwargs)
 
 
-def multistate_output(**kwargs):
+def multistate_output(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSO", **kwargs)
     kwargs["objectType"] = MultiStateOutputObject
     kwargs["relinquishDefault"] = Unsigned(1)
@@ -432,7 +436,7 @@ def multistate_output(**kwargs):
     return multistate(**kwargs)
 
 
-def multistate_value(**kwargs):
+def multistate_value(**kwargs: t.Any) -> "ObjectFactory":
     kwargs["name"] = set_default_if_not_provided("name", "MSV", **kwargs)
     kwargs["objectType"] = MultiStateValueObject
     kwargs["relinquishDefault"] = Unsigned(1)

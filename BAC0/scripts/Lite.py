@@ -12,6 +12,7 @@ and allow communication with other devices.
 """
 import asyncio
 import typing as t
+from types import TracebackType
 
 # --- standard Python modules ---
 import weakref
@@ -115,7 +116,7 @@ class Lite(
         bdtable=None,
         ping: bool = True,
         ping_delay: int = 300,
-        db_params: t.Optional[t.Dict[str, t.Any]] = None,
+        db_params: t.Optional[t.Dict[str, t.Union[str, int, bool]]] = None,
         **params,
     ) -> None:
         self._initialized = False
@@ -210,7 +211,7 @@ class Lite(
 
         self.i_am()
 
-    def i_am(self):
+    def i_am(self) -> None:
         loop = asyncio.get_running_loop()
         loop.create_task(self._i_am())
 
@@ -233,7 +234,7 @@ class Lite(
         )
         self._write_to_db.start()
 
-    async def save_registered_devices_to_db(self):
+    async def save_registered_devices_to_db(self) -> None:
         if len(self.registered_devices) > 0:
             for each in self.registered_devices:
                 try:
@@ -300,13 +301,13 @@ class Lite(
                     each.poll(delay=each.properties.pollDelay)
 
     @property
-    def registered_devices(self):
+    def registered_devices(self) -> t.List[t.Union[RPDeviceConnected, RPMDeviceConnected]]:
         """
         Devices that have been created using BAC0.device(args)
         """
         return list(self._registered_devices.values())
 
-    def unregister_device(self, device):
+    def unregister_device(self, device: t.Union[RPDeviceConnected, RPMDeviceConnected]) -> None:
         """
         Remove from the registered list
         """
@@ -354,7 +355,7 @@ class Lite(
             del self._points_to_trend[oid]
 
     @property
-    async def devices(self):
+    async def devices(self) -> None:
         await self._devices(_return_list=False)
 
     async def _devices(
@@ -425,7 +426,7 @@ class Lite(
             return lst  # type: ignore[return-value]
 
     @property
-    def trends(self) -> t.List[t.Any]:
+    def trends(self) -> t.List[t.Union[Point, TrendLog, VirtualPoint]]:
         """
         This will present a list of all registered trends used by Bokeh Server
         """
@@ -451,7 +452,7 @@ class Lite(
     def __repr__(self) -> str:
         return f"Bacnet Network using ip {self.localIPAddr} with device id {self.Boid}"
 
-    def __getitem__(self, boid_or_localobject: t.Union[str, ObjectIdentifier, tuple]):
+    def __getitem__(self, boid_or_localobject: t.Union[str, ObjectIdentifier, tuple]) -> t.Optional[t.Union["RPDeviceConnected", "RPMDeviceConnected", object]]:
         """
         Retrieve an item from the application by its name or identifier.
 
@@ -479,7 +480,7 @@ class Lite(
         else:
             return item
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Lite":
         while not self._initialized:
             await asyncio.sleep(0.1)
         self._log.info(
@@ -487,7 +488,7 @@ class Lite(
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: t.Optional[t.Type[BaseException]], exc_val: t.Optional[BaseException], exc_tb: t.Optional[TracebackType]) -> None:
         await self._disconnect()
         while self._initialized:
             await asyncio.sleep(0.1)
@@ -495,7 +496,7 @@ class Lite(
             f"{self.localObjName}|{self.Boid} disconnected. Exiting context manager."
         )
 
-    def get_device_by_id(self, id):
+    def get_device_by_id(self, id: int) -> t.Union[RPDeviceConnected, RPMDeviceConnected]:
         for each in self.registered_devices:
             if each.properties.device_id == id:
                 return each

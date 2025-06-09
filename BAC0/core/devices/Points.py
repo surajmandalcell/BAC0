@@ -35,6 +35,16 @@ from ..utils.lookfordependency import pandas_if_available
 from ..utils.notes import note_and_log
 
 _PANDAS, pd, sql, Timestamp = pandas_if_available()
+
+# Type aliases for better type safety
+BACnetValue = t.Union[float, int, bool, str, None]
+UnitsState = t.Union[str, t.List[str], t.Tuple[str, ...], None]
+PointTag = t.Union[str, int, float, bool]
+
+# Forward declaration for device type
+if t.TYPE_CHECKING:
+    from .Device import Device
+
 # ------------------------------------------------------------------------------
 
 
@@ -43,7 +53,7 @@ class PointProperties(object):
     A container for point properties.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.device = None
         self.name = None
         self.type = ""
@@ -61,7 +71,7 @@ class PointProperties(object):
         return f"{self.asdict}"
 
     @property
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return self.__dict__
 
 
@@ -83,16 +93,16 @@ class Point:
 
     def __init__(
         self,
-        device=None,
-        pointType=None,
-        pointAddress=None,
-        pointName=None,
-        description=None,
-        presentValue=None,
-        units_state=None,
-        history_size=None,
-        tags=[],
-    ):
+        device: t.Optional["Device"] = None,
+        pointType: t.Optional[str] = None,
+        pointAddress: t.Optional[int] = None,
+        pointName: t.Optional[str] = None,
+        description: t.Optional[str] = None,
+        presentValue: BACnetValue = None,
+        units_state: UnitsState = None,
+        history_size: t.Optional[int] = None,
+        tags: t.Optional[t.List[PointTag]] = None,
+    ) -> None:
         self._history = namedtuple("_history", ["timestamp", "value"])
         self.properties = PointProperties()
 
@@ -125,12 +135,12 @@ class Point:
 
         self.tags = tags
 
-        self._cache: t.Dict[str, t.Tuple[t.Optional[datetime], t.Any]] = {
+        self._cache: t.Dict[str, t.Tuple[t.Optional[datetime], BACnetValue]] = {
             "_previous_read": (None, None)
         }
 
     @property
-    async def value(self):
+    async def value(self) -> BACnetValue:
         """
         Retrieve value of the point
         """
@@ -284,14 +294,14 @@ class Point:
                     self._log.exception("Can't append to history")
 
     @property
-    def units(self):
+    def units(self) -> t.Optional[str]:
         """
         Should return units
         """
         raise Exception("Must be overridden")
 
     @property
-    def lastValue(self):
+    def lastValue(self) -> BACnetValue:
         """
         returns: last value read
         """
@@ -303,7 +313,7 @@ class Point:
             return self._history.value[-1]
 
     @property
-    def lastTimestamp(self):
+    def lastTimestamp(self) -> t.Optional[datetime]:
         """
         returns: last timestamp read
         """
@@ -339,7 +349,7 @@ class Point:
         his_table.datatype = self.properties.type
         return his_table
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         self._history.timestamp = []
         self._history.value = []
 
@@ -376,8 +386,8 @@ class Point:
                 raise ValueError(f"Cannot find property named {key}")
 
     async def write(
-        self, value: t.Any, *, prop: str = "presentValue", priority: str = "16"
-    ):
+        self, value: BACnetValue, *, prop: str = "presentValue", priority: str = "16"
+    ) -> None:
         """
         Write to present value of a point
 
@@ -728,15 +738,15 @@ class NumericPoint(Point):
 
     def __init__(
         self,
-        device=None,
-        pointType=None,
-        pointAddress=None,
-        pointName=None,
-        description=None,
-        presentValue=None,
-        units_state=None,
-        history_size=None,
-    ):
+        device: t.Optional["Device"] = None,
+        pointType: t.Optional[str] = None,
+        pointAddress: t.Optional[int] = None,
+        pointName: t.Optional[str] = None,
+        description: t.Optional[str] = None,
+        presentValue: t.Optional[t.Union[int, float]] = None,
+        units_state: UnitsState = None,
+        history_size: t.Optional[int] = None,
+    ) -> None:
         Point.__init__(
             self,
             device=device,
@@ -755,7 +765,7 @@ class NumericPoint(Point):
     #        return res.result()
 
     @property
-    async def value(self):
+    async def value(self) -> t.Union[int, float]:
         res = await super().value
         self._trend(res)
         return res
@@ -830,15 +840,15 @@ class BooleanPoint(Point):
 
     def __init__(
         self,
-        device=None,
-        pointType=None,
-        pointAddress=None,
-        pointName=None,
-        description=None,
-        presentValue=None,
-        units_state=None,
-        history_size=None,
-    ):
+        device: t.Optional["Device"] = None,
+        pointType: t.Optional[str] = None,
+        pointAddress: t.Optional[int] = None,
+        pointName: t.Optional[str] = None,
+        description: t.Optional[str] = None,
+        presentValue: t.Optional[bool] = None,
+        units_state: t.Optional[t.Tuple[str, str]] = None,
+        history_size: t.Optional[int] = None,
+    ) -> None:
         Point.__init__(
             self,
             device=device,

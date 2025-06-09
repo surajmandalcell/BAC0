@@ -11,6 +11,7 @@ TimeSync.py - creation of time synch requests
 
 import datetime as dt
 from datetime import datetime
+import typing as t
 
 # --- standard Python modules ---
 
@@ -29,7 +30,7 @@ from ...core.utils.notes import note_and_log
 from ..io.IOExceptions import ApplicationNotStarted
 
 
-def _build_datetime(UTC=False):
+def _build_datetime(UTC: bool = False) -> DateTime:
     if UTC:
         _d = dt.datetime.utcnow().date()
         _t = dt.datetime.utcnow().time()

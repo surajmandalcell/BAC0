@@ -1,4 +1,5 @@
 from datetime import datetime
+import typing as t
 
 import pytz
 
@@ -35,18 +36,18 @@ class InfluxDB:
     client (InfluxDBClientAsync): The client for interacting with the InfluxDB server.
     """
 
-    url = None
-    port = 8086
-    token = None
-    org = None
-    timeout = 6000
-    bucket = None
-    tags_file = None
-    username = None
-    password = None
+    url: t.Optional[str] = None
+    port: int = 8086
+    token: t.Optional[str] = None
+    org: t.Optional[str] = None
+    timeout: int = 6000
+    bucket: t.Optional[str] = None
+    tags_file: t.Optional[str] = None
+    username: t.Optional[str] = None
+    password: t.Optional[str] = None
     client: InfluxDBClientAsync
 
-    def __init__(self, params):
+    def __init__(self, params: t.Dict[str, t.Any]) -> None:
         for k, v in params.items():
             setattr(self, k, v)
         if self.bucket is None:

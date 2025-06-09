@@ -15,6 +15,7 @@ Example:
 # --- 3rd party modules ---
 
 import asyncio
+import typing as t
 
 from ..core.utils.notes import note_and_log
 from ..core.io.IOExceptions import NotReadyError
@@ -31,7 +32,7 @@ class Match(Task):
     Match two properties of a BACnet Object (i.e. a point status with its command).
     """
 
-    def __init__(self, status=None, command=None, delay=5, name=None):
+    def __init__(self, status: t.Any = None, command: t.Any = None, delay: int = 5, name: t.Optional[str] = None) -> None:
         self._log.debug(
             f"Creating Match task for {command} and {status}. Delay : {delay}"
         )

@@ -205,7 +205,7 @@ class ReadProperty:
         if not isinstance(response, ErrorRejectAbortNack):
             return response
 
-    def _split_the_read_request(self, args, arr_index):
+    def _split_the_read_request(self, args: str, arr_index: t.Optional[int]) -> t.List[str]:
         """
         When a device doesn't support segmentation, this function
         will split the request according to the length of the
@@ -353,8 +353,8 @@ class ReadProperty:
         return values
 
     def build_rp_request(
-        self, args: t.List[str], arr_index=None, vendor_id: int = 0, bacoid=None
-    ) -> t.Tuple:
+        self, args: t.List[str], arr_index: t.Optional[int] = None, vendor_id: int = 0, bacoid: t.Optional[int] = None
+    ) -> t.Tuple[Address, ObjectIdentifier, PropertyIdentifier, t.Optional[int]]:
         vendor = get_vendor_info(vendor_id)
         try:
             addr, obj_type_str, obj_inst_str, prop_id_str = args[:4]
@@ -614,13 +614,13 @@ class ReadProperty:
 
     async def readRange(
         self,
-        args,
-        range_params=None,
-        arr_index=None,
-        vendor_id=0,
-        bacoid=None,
-        timeout=10,
-    ):
+        args: str,
+        range_params: t.Optional[t.List[t.Any]] = None,
+        arr_index: t.Optional[int] = None,
+        vendor_id: int = 0,
+        bacoid: t.Optional[int] = None,
+        timeout: int = 10,
+    ) -> t.Any:
         """
         Build a ReadRangeRequest request, wait for the answer and return the value
 

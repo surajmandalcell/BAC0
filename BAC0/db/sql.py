@@ -9,6 +9,7 @@ sql.py -
 """
 
 import os.path
+import typing as t
 
 # --- standard Python modules ---
 import pickle
@@ -36,7 +37,7 @@ class SQLMixin(object):
     is not available.
     """
 
-    async def _read_from_sql(self, request, db_name):
+    async def _read_from_sql(self, request: str, db_name: str) -> t.Any:
         """
         Using the contextlib, I hope to close the connection to database when
         not in use

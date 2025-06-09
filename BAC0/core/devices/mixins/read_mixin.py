@@ -29,13 +29,13 @@ from ..Trends import TrendLog
 
 
 # Requests processing
-def retrieve_type(obj_list, point_type_key):
+def retrieve_type(obj_list: t.List[t.Tuple[str, int]], point_type_key: str) -> t.Iterator[t.Tuple[str, int]]:
     for point_type, point_address in obj_list:
         if point_type_key in str(point_type):
             yield (point_type, point_address)
 
 
-def to_float_if_possible(val):
+def to_float_if_possible(val: t.Any) -> t.Union[float, t.Any]:
     try:
         return float(val)
     except ValueError:

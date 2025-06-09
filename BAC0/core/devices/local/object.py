@@ -12,6 +12,7 @@ that will be served by the local device of BAC0.
 
 You can indeed use this "method" and modify it to fill your needs.
 """
+import typing as t
 
 
 # First create our local classes which are missing from bacpypes3

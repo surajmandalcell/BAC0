@@ -22,6 +22,10 @@ from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import CharacterString
 from bacpypes3.vendor import VendorInfo, get_vendor_info
 
+# Type aliases for better type safety
+ConfigValue = t.Union[str, int, bool, t.List[str], t.Dict[str, t.Any], None]
+RouterPathInfo = t.Tuple[t.Tuple[int, int], str]
+
 # --- this application's modules ---
 from ..core.app.asyncApp import (
     BAC0Application,
@@ -39,10 +43,10 @@ from ..tasks.TaskManager import stopAllTasks
 
 @note_and_log
 class LocalObjects(object):
-    def __init__(self, device):
+    def __init__(self, device: "Base") -> None:
         self.device = device
 
-    def __getitem__(self, obj):
+    def __getitem__(self, obj: t.Union[str, t.Tuple[str, int]]) -> t.Any:
         item = None
         if isinstance(obj, tuple):
             obj_type, instance = obj
@@ -56,7 +60,7 @@ class LocalObjects(object):
             return item
 
 
-def charstring(val):
+def charstring(val: t.Union[str, CharacterString]) -> CharacterString:
     return CharacterString(val) if isinstance(val, str) else val
 
 
@@ -79,24 +83,24 @@ class Base:
     def __init__(
         self,
         localIPAddr: Address = Address("127.0.0.1/24"),
-        networkNumber: int = None,
+        networkNumber: t.Optional[int] = None,
         localObjName: str = "BAC0",
-        deviceId: int = None,
+        deviceId: t.Optional[int] = None,
         firmwareRevision: str = "".join(sys.version.split("|")[:2]),
         maxAPDULengthAccepted: str = "1024",
         maxSegmentsAccepted: str = "1024",
         segmentationSupported: str = "segmentedBoth",
-        bbmdAddress: str = None,
+        bbmdAddress: t.Optional[str] = None,
         bbmdTTL: int = 0,
-        bdtable: list = None,
+        bdtable: t.Optional[t.List[str]] = None,
         modelName: str = "BAC0 Scripting Tool",
         vendorId: int = 842,
         vendorName: str = "SERVISYS inc.",
         description: str = "http://christiantremblay.github.io/BAC0/",
         location: str = "Bromont, Québec",
         timezone: str = "America/Montreal",
-        json_file: str = None,
-    ):
+        json_file: t.Optional[str] = None,
+    ) -> None:
         self.log("Configurating app", level="debug")
 
         # Register Servisys
@@ -170,7 +174,7 @@ class Base:
                 f"Gros probleme : {error}. Address requested : {localIPAddr}"
             )
 
-    def startApp(self):
+    def startApp(self) -> None:
         """
         Define the local device, including services supported.
         Once defined, start the BACnet stack in its own thread.
@@ -182,11 +186,11 @@ class Base:
             class config(defaultdict):
                 "Simple class to mimic args dot retrieval"
 
-                def __init__(self, cfg):
+                def __init__(self, cfg: t.Dict[str, ConfigValue]) -> None:
                     for k, v in cfg.items():
                         self[k] = v
 
-                def __getattr__(self, key):
+                def __getattr__(self, key: str) -> ConfigValue:
                     return self[key]
 
             if self.bbmdAddress is not None:
@@ -261,18 +265,18 @@ class Base:
             raise InitializationError(f"Error starting app: {error}")
             self.log("finally", level="debug")
 
-    def register_foreign_device(self, addr=None, ttl=0):
+    def register_foreign_device(self, addr: t.Optional[str] = None, ttl: int = 0) -> None:
         # self.this_application.register_to_bbmd(addr, ttl)
         raise NotImplementedError()
 
-    def unregister_foreign_device(self):
+    def unregister_foreign_device(self) -> None:
         self.this_application.unregister_from_bbmd()
 
     def disconnect(self) -> asyncio.Task:
         task = asyncio.create_task(self._disconnect())
         return task
 
-    async def _disconnect(self):
+    async def _disconnect(self) -> None:
         """
         Stop the BACnet stack.  Free the IP socket.
         """
@@ -289,7 +293,7 @@ class Base:
         self.log("BACnet stopped", level="info")
 
     @property
-    def routing_table(self):
+    def routing_table(self) -> t.Dict[str, "Router"]:
         """
         Routing Table will give all the details about routers and how they
         connect BACnet networks together.
@@ -300,13 +304,13 @@ class Base:
         """
 
         class Router:
-            def __init__(self, snet, address, dnets, path=None):
+            def __init__(self, snet: int, address: Address, dnets: t.Set[int], path: t.Optional[t.List[t.Any]] = None) -> None:
                 self.source_network: int = snet
                 self.address: Address = address
-                self.destination_networks: set = dnets
-                self.path: list = path
+                self.destination_networks: t.Set[int] = dnets
+                self.path: t.List[t.Any] = path or []
 
-            def __repr__(self):
+            def __repr__(self) -> str:
                 return "Source Network: {} | Address: {} | Destination Networks: {} | Path: {}".format(
                     self.source_network,
                     self.address,

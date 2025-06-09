@@ -20,6 +20,7 @@ Write.py - creation of WriteProperty requests
 
 """
 import re
+import typing as t
 
 from bacpypes3.apdu import ErrorRejectAbortNack
 from bacpypes3.app import Application
@@ -45,10 +46,10 @@ from .IOExceptions import (
 # ------------------------------------------------------------------------------
 
 # some debugging
-_debug = 0
-_LOG = ModuleLogger(globals())
-WRITE_REGEX = r"(?P<address>\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d+)?\b|(\b\d+:\d+\b)) (?P<objId>(@obj_)?[-\w:]*[: ]*\d*) (?P<propId>(@prop_)?\w*(-\w*)?)[ ]?(?P<value>-?[\w\d]*\.?\d*)?[ ]?(?P<indx>-|\d*)?[ ]?(?P<priority>(1[0-6]|[0-9]))?"
-write_pattern = re.compile(WRITE_REGEX)
+_debug: int = 0
+_LOG: ModuleLogger = ModuleLogger(globals())
+WRITE_REGEX: str = r"(?P<address>\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d+)?\b|(\b\d+:\d+\b)) (?P<objId>(@obj_)?[-\w:]*[: ]*\d*) (?P<propId>(@prop_)?\w*(-\w*)?)[ ]?(?P<value>-?[\w\d]*\.?\d*)?[ ]?(?P<indx>-|\d*)?[ ]?(?P<priority>(1[0-6]|[0-9]))?"
+write_pattern: t.Pattern[str] = re.compile(WRITE_REGEX)
 
 
 @note_and_log
@@ -58,7 +59,7 @@ class WriteProperty:
 
     """
 
-    def write(self, args, vendor_id=0, timeout=10):
+    def write(self, args: str, vendor_id: int = 0, timeout: int = 10) -> None:
         # asyncio.create_task(
         #    self._write(args=args, vendor_id=vendor_id, timeout=timeout)
         # )
@@ -67,7 +68,7 @@ class WriteProperty:
         write_task = DoOnce((self._write, [args, vendor_id, timeout]))
         write_task.start()
 
-    async def _write(self, args, vendor_id=0, timeout=10):
+    async def _write(self, args: str, vendor_id: int = 0, timeout: int = 10) -> bool:
         """Build a WriteProperty request, wait for an answer, and return status [True if ok, False if not].
 
         :param args: String with <addr> <type> <inst> <prop> <value> [ <indx> ] - [ <priority> ]
@@ -133,7 +134,7 @@ class WriteProperty:
             self.log(f"exception: {error!r} | Requests = {request}", level="error")
 
     @classmethod
-    def _parse_wp_args(cls, args):
+    def _parse_wp_args(cls, args: str) -> t.Tuple[str, str, str, t.Optional[str], t.Optional[str], t.Optional[str]]:
         """
         Utility to parse the string of the request.
         Supports @obj_ and @prop_ syntax for objest type and property id, useful with proprietary objects and properties.
@@ -169,7 +170,7 @@ class WriteProperty:
 
         return (address, obj_type, obj_inst, prop_id, value, priority, indx)
 
-    def build_wp_request(self, args, vendor_id=0):
+    def build_wp_request(self, args: str, vendor_id: int = 0) -> t.Tuple[Address, ObjectIdentifier, PropertyIdentifier, t.Any, t.Optional[int], t.Optional[int]]:
         vendor_id = vendor_id
         (
             address,

@@ -9,6 +9,11 @@ import typing as t
 # --- standard Python modules ---
 from datetime import time as dt_time
 
+# Type aliases for schedule functionality
+ScheduleDict = t.Dict[str, t.Union[t.Dict[str, int], t.Dict[str, t.List[t.Tuple[str, str]]]]]
+DailyScheduleList = t.List[t.Tuple[str, t.Any]]
+StateMap = t.Dict[str, int]
+
 from bacpypes3.apdu import WritePropertyRequest
 from bacpypes3.app import Application
 from bacpypes3.basetypes import DailySchedule, TimeValue
@@ -77,7 +82,7 @@ class Schedule:
         },
     }
 
-    def create_weeklySchedule(self, dict_schedule, object_reference=None):
+    def create_weeklySchedule(self, dict_schedule: ScheduleDict, object_reference: t.Optional[str] = None) -> "Schedule.WeeklySchedule":
         """
         From a structured dict (see schedule_example), create a WeeklySchedule
         an ArrayOf(DailySchedule)

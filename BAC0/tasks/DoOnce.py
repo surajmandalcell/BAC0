@@ -9,6 +9,7 @@ DoOnce.py - execute a task once
 """
 
 import asyncio
+import typing as t
 from ..core.utils.notes import note_and_log
 from .TaskManager import OneShotTask
 
@@ -21,7 +22,7 @@ class DoOnce(OneShotTask):
         device['point_name'].poll(delay=60)
     """
 
-    def __init__(self, fnc, name="do_once"):
+    def __init__(self, fnc: t.Union[t.Callable, t.Tuple[t.Callable, t.List[t.Any]]], name: str = "do_once") -> None:
         """
         :param point: (BAC0.core.device.Points.Point) name of the point to read
         :param delay: (int) Delay between reads in seconds, defaults = 10sec

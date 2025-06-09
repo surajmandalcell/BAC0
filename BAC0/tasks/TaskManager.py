@@ -10,6 +10,7 @@ TaskManager.py - creation of threads used for repetitive tasks.
 A key building block for point simulation.
 """
 import asyncio
+import typing as t
 import time
 from random import random
 
@@ -21,7 +22,7 @@ from ..core.utils.notes import note_and_log
 # ------------------------------------------------------------------------------
 
 
-async def stopAllTasks():
+async def stopAllTasks() -> bool:
     Task._log.info("Stopping all tasks")
     for each in Task.tasks:
         each.aio_task.cancel()
@@ -36,15 +37,15 @@ class Task(object):
     high_latency = 60
 
     @classmethod
-    def clean_tasklist(cls):
+    def clean_tasklist(cls) -> None:
         cls._log.debug("Cleaning tasks list")
         cls.tasks = []
 
     @classmethod
-    def number_of_tasks(cls):
+    def number_of_tasks(cls) -> int:
         return len(cls.tasks)
 
-    def __init__(self, fn=None, name=None, delay=0):
+    def __init__(self, fn: t.Optional[t.Callable] = None, name: t.Optional[str] = None, delay: int = 0) -> None:
         # delay = 0 -> one shot
         self.id = id(self)
         self.name = name if name is not None else f"Task_{self.id}"

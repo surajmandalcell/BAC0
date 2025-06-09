@@ -32,7 +32,7 @@ class LogList:
     LOGGERS: t.List[Logger] = []
 
 
-def convert_level(level):
+def convert_level(level: t.Union[str, int, None]) -> t.Optional[int]:
     if not level:
         return None
     _valid_levels = [
