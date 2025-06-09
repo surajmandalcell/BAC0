@@ -19,6 +19,11 @@ from .IOExceptions import (
     OutOfServiceSet,
 )
 
+# Type aliases for better type safety
+# BACnet simulation command string format: "<address> <object_type> <instance> <property> <value>"
+# Examples: "192.168.1.100 analogOutput 1 presentValue 75.5"
+BACnetSimulateCommandString = str  # Structured string format for BACnet simulation operations
+
 # --- standard Python modules ---
 # --- 3rd party modules ---
 # --- this application's modules ---
@@ -32,7 +37,7 @@ class Simulation:
     Global informations regarding simulation
     """
 
-    async def sim(self, args: str) -> None:
+    async def sim(self, args: BACnetSimulateCommandString) -> None:
         """
         Simulate I/O points by setting the Out_Of_Service property, then doing a
         WriteProperty to the point's Present_Value.
@@ -76,7 +81,7 @@ class Simulation:
                     f"Failed to write to OutOfService property ({e})", level="warning"
                 )
 
-    async def is_out_of_service(self, args):
+    async def is_out_of_service(self, args: BACnetSimulateCommandString) -> bool:
         if not self._started:
             raise ApplicationNotStarted("BACnet stack not running - use startApp()")
         _this_application: BAC0Application = self.this_application
@@ -95,7 +100,7 @@ class Simulation:
 
         return True if oos else False
 
-    async def out_of_service(self, args):
+    async def out_of_service(self, args: BACnetSimulateCommandString) -> None:
         """
         Set the Out_Of_Service property so the Present_Value of an I/O may be written.
 
@@ -118,7 +123,7 @@ class Simulation:
         except NoResponseFromController as e:
             self.log(f"Failed to write to OutOfService property ({e})", level="warning")
 
-    async def release(self, args):
+    async def release(self, args: BACnetSimulateCommandString) -> None:
         """
         Set the Out_Of_Service property to False - to release the I/O point back to
         the controller's control.

@@ -36,6 +36,11 @@ from BAC0.tasks.DoOnce import DoOnce
 from ..app.asyncApp import BAC0Application
 from ..utils.notes import note_and_log
 
+# Type aliases for better type safety
+# BACnet write command string format: "<address> <object_type> <instance> <property> <value> [array_index] [priority]"
+# Examples: "192.168.1.100 analogOutput 1 presentValue 75.5", "2:5 binaryOutput 2 presentValue True 10"
+BACnetWriteCommandString = str  # Structured string format for BACnet write operations
+
 # --- this application's modules ---
 from .IOExceptions import (
     ApplicationNotStarted,
@@ -62,7 +67,7 @@ class WriteProperty:
 
     """
 
-    def write(self, args: str, vendor_id: int = 0, timeout: int = 10) -> None:
+    def write(self, args: BACnetWriteCommandString, vendor_id: int = 0, timeout: int = 10) -> None:
         # asyncio.create_task(
         #    self._write(args=args, vendor_id=vendor_id, timeout=timeout)
         # )
@@ -71,7 +76,7 @@ class WriteProperty:
         write_task = DoOnce((self._write, [args, vendor_id, timeout]))
         write_task.start()
 
-    async def _write(self, args: str, vendor_id: int = 0, timeout: int = 10) -> bool:
+    async def _write(self, args: BACnetWriteCommandString, vendor_id: int = 0, timeout: int = 10) -> bool:
         """Build a WriteProperty request, wait for an answer, and return status [True if ok, False if not].
 
         :param args: String with <addr> <type> <inst> <prop> <value> [ <indx> ] - [ <priority> ]
@@ -209,7 +214,7 @@ class WriteProperty:
 
 
 '''
-    def writeMultiple(self, addr=None, args=None, vendor_id=0, timeout=10):
+    def writeMultiple(self, addr: Optional[str] = None, args: Optional[List[str]] = None, vendor_id: int = 0, timeout: int = 10) -> None:
         """Build a WritePropertyMultiple request, wait for an answer
 
         :param addr: destination of request (ex. '2:3' or '192.168.1.2')
@@ -260,7 +265,7 @@ class WriteProperty:
             reason = find_reason(apdu)
             raise NoResponseFromController(f"APDU Abort Reason : {reason}")
 
-    def build_wpm_request(self, args, vendor_id=0, addr=None):
+    def build_wpm_request(self, args: List[str], vendor_id: int = 0, addr: Optional[str] = None):
         if not addr:
             raise ValueError("Please provide addr")
 

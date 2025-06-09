@@ -54,14 +54,14 @@ class SQLMixin(object):
                 columns = [description[0] for description in cursor.description]
                 return pd.DataFrame(rows, columns=columns)
 
-    def dev_properties_df(self):
+    def dev_properties_df(self) -> t.Dict[str, t.Any]:
         dic = self.properties.asdict.copy()
         dic.pop("network", None)
         dic["objects_list"] = []
         dic.pop("pss", None)
         return dic
 
-    def points_properties_df(self):
+    def points_properties_df(self) -> t.Dict[str, t.Dict[str, t.Any]]:
         """
         Return a dictionary of point/point_properties in preparation for storage in SQL.
         """

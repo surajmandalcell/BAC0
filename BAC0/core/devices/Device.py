@@ -15,6 +15,12 @@ import os.path
 # --- standard Python modules ---
 from collections import namedtuple
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+import typing as t
+
+# Type aliases for Device operations - More specific than Any
+DeviceAddress = Union[str, int]  # Can be IP address or device ID
+DeviceObjectList = List[Tuple[str, int]]  # List of (object_type, instance) tuples
+BACnetNetwork = Any  # Will be typed more specifically when we analyze the network module
 
 
 # --- this application's modules ---
@@ -45,15 +51,15 @@ _PANDAS, pd, _, _ = pandas_if_available()
 
 
 class DeviceProperties(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.name: str = "Unknown"
         self.address: Optional[str] = None
         self.device_id: Optional[int] = None
-        self.network: Optional[Any] = None
+        self.network: Optional[BACnetNetwork] = None
         self.pollDelay: Optional[int] = None
-        self.objects_list: Optional[List] = None
+        self.objects_list: Optional[DeviceObjectList] = None
         self.pss: ServicesSupported = ServicesSupported()
-        self.multistates: Optional[Dict] = None
+        self.multistates: Optional[Dict[str, List[str]]] = None
         self.db_name: Optional[str] = None
         self.segmentation_supported: bool = True
         self.history_size: Optional[int] = None
@@ -96,18 +102,18 @@ class Device(SQLMixin):
         self,
         address: Optional[str] = None,
         device_id: Optional[int] = None,
-        network: Optional[Any] = None,
+        network: Optional[BACnetNetwork] = None,
         *,
         poll: int = 10,
         from_backup: Optional[str] = None,  # filename of backup
         segmentation_supported: bool = True,
-        object_list: Optional[List] = None,
+        object_list: Optional[DeviceObjectList] = None,
         auto_save: bool = False,
         save_resampling: str = "1s",
         clear_history_on_save: bool = False,
         history_size: Optional[int] = None,
         reconnect_on_failure: bool = True,
-    ):
+    ) -> None:
         self.properties = DeviceProperties()
         # self.initialized = False
         self.properties.address = address
@@ -438,8 +444,112 @@ class Device(SQLMixin):
 #    return dev
 
 
-async def device(*args: Any, **kwargs: Any) -> Device:
-    dev = Device(*args, **kwargs)
+async def device(
+    address: Optional[str] = None,
+    device_id: Optional[int] = None,
+    network: Optional[BACnetNetwork] = None,
+    *,
+    poll: int = 10,
+    from_backup: Optional[str] = None,
+    segmentation_supported: bool = True,
+    object_list: Optional[DeviceObjectList] = None,
+    auto_save: bool = False,
+    save_resampling: str = "1s",
+    clear_history_on_save: bool = False,
+    history_size: Optional[int] = None,
+    reconnect_on_failure: bool = True,
+) -> Device:
+    """
+    Create and connect to a BACnet device for reading/writing points.
+    
+    This is the primary function for establishing communication with BACnet devices.
+    Once connected, you can read/write points, access device properties, and monitor
+    data changes through polling or COV (Change of Value) subscriptions.
+    
+    Args:
+        address: Device IP address or network address
+        device_id: BACnet device instance ID (unique identifier)
+        network: BACnet network instance (usually from BAC0.start())
+        poll: Automatic polling interval in seconds (0 = no polling)
+        from_backup: SQLite backup file to restore device configuration
+        segmentation_supported: Enable large message segmentation (default: True)
+        object_list: Pre-defined list of device objects to skip discovery
+        auto_save: Automatically save point histories to database
+        save_resampling: Data resampling interval for database saves
+        clear_history_on_save: Clear in-memory history after saving
+        history_size: Maximum number of historical points to retain
+        reconnect_on_failure: Auto-reconnect when device becomes unreachable
+        
+    Returns:
+        Device: Connected BACnet device ready for point operations
+        
+    Examples:
+        Basic device connection:
+        >>> import BAC0
+        >>> bacnet = BAC0.start(ip="192.168.1.100/24")
+        >>> device = await BAC0.device("192.168.1.50", 1001, bacnet)
+        >>> print(device.points)  # Show all discovered points
+        
+        Connect with specific polling:
+        >>> device = await BAC0.device(
+        ...     address="192.168.1.50",
+        ...     device_id=1001,
+        ...     network=bacnet,
+        ...     poll=30  # Poll every 30 seconds
+        ... )
+        
+        Connect and read points immediately:
+        >>> device = await BAC0.device("192.168.1.50", 1001, bacnet)
+        >>> temp = device["Temperature"]  # Access point by name
+        >>> print(f"Current temperature: {temp.value}")
+        
+        Connect with database auto-save:
+        >>> device = await BAC0.device(
+        ...     "192.168.1.50", 1001, bacnet,
+        ...     auto_save=True,
+        ...     save_resampling="5min",  # Save every 5 minutes
+        ...     history_size=1000       # Keep last 1000 readings
+        ... )
+        
+        Connect using network notation:
+        >>> # For devices on different BACnet networks
+        >>> device = await BAC0.device("2:50", 1001, bacnet)  # Network 2, MAC 50
+        
+        Restore from backup:
+        >>> device = await BAC0.device(
+        ...     from_backup="device_backup.db",
+        ...     network=bacnet
+        ... )
+        
+        Read and write operations:
+        >>> device = await BAC0.device("192.168.1.50", 1001, bacnet)
+        >>> 
+        >>> # Read current values
+        >>> setpoint = device["Room_Temp_Setpoint"].value
+        >>> status = device["Fan_Status"].value
+        >>> 
+        >>> # Write new values  
+        >>> device["Room_Temp_Setpoint"].write(72.5)
+        >>> device["Fan_Command"].write("On")
+        >>> 
+        >>> # Access point history
+        >>> history = device["Temperature"].history
+        >>> print(f"Last 10 readings: {history.tail(10)}")
+    """
+    dev = Device(
+        address=address,
+        device_id=device_id,
+        network=network,
+        poll=poll,
+        from_backup=from_backup,
+        segmentation_supported=segmentation_supported,
+        object_list=object_list,
+        auto_save=auto_save,
+        save_resampling=save_resampling,
+        clear_history_on_save=clear_history_on_save,
+        history_size=history_size,
+        reconnect_on_failure=reconnect_on_failure,
+    )
     await dev.new_state(DeviceDisconnected)
     return dev
 
@@ -812,7 +922,7 @@ class DeviceConnected(Device):
         )
         self.properties.description = str(await self.read_property("description"))
 
-    async def ping(self):
+    async def ping(self) -> bool:
         try:
             if await self.read_property("objectName") == self.properties.name:
                 self.properties.ping_failures = 0

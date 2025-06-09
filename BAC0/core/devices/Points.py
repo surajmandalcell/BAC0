@@ -167,7 +167,7 @@ class Point:
         self._cache["_previous_read"] = (datetime.now().astimezone(), res)
         return res
 
-    async def read_priority_array(self):
+    async def read_priority_array(self) -> t.Optional[t.List[BACnetValue]]:
         """
         Retrieve priority array of the point
         """
@@ -198,7 +198,7 @@ class Point:
             except Exception as e:
                 raise Exception(f"Problem reading : {self.properties.name} | {e}")
 
-    async def read_property(self, prop):
+    async def read_property(self, prop: str) -> BACnetValue:
         try:
             return await self.properties.device.properties.network.read(
                 "{} {} {} {}".format(
@@ -243,7 +243,7 @@ class Point:
         return self.properties.bacnet_properties
 
     @property
-    def is_overridden(self):
+    def is_overridden(self) -> bool:
         self.read_priority_array()
         if self.properties.priority_array is False:
             return False
@@ -253,7 +253,7 @@ class Point:
         else:
             return False
 
-    async def priority(self, priority=None):
+    async def priority(self, priority: t.Optional[int] = None) -> t.Union[t.List[BACnetValue], BACnetValue, None]:
         if self.properties.priority_array is False:
             return None
 
@@ -562,10 +562,10 @@ class Point:
         else:
             raise RuntimeError("Stop polling before redefining it")
 
-    def match(self, point, *, delay=5):
+    def match(self, point: "Point", *, delay: int = 5) -> None:
         asyncio.create_task(self._match(point=point, delay=delay))
 
-    async def _match(self, point, *, delay=5):
+    async def _match(self, point: "Point", *, delay: int = 5) -> None:
         """
         This allow functions like :
             device['status'].match('command')
@@ -593,12 +593,12 @@ class Point:
         else:
             raise RuntimeError("Stop task before redefining it")
 
-    def match_value(self, value, *, delay=5, use_last_value=False):
+    def match_value(self, value: BACnetValue, *, delay: int = 5, use_last_value: bool = False) -> None:
         asyncio.create_task(
             self._match_value(value=value, delay=delay, use_last_value=use_last_value)
         )
 
-    async def _match_value(self, value, *, delay=5, use_last_value=False):
+    async def _match_value(self, value: BACnetValue, *, delay: int = 5, use_last_value: bool = False) -> None:
         """
         This allow functions like :
             device['point'].match('value')

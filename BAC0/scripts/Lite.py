@@ -96,14 +96,54 @@ class Lite(
     TextMixin,
 ):
     """
-    Build a BACnet application to accept read and write requests.
-    [Basic Whois/IAm functions are implemented in parent BasicScript class.]
-    Once created, execute a whois() to build a list of available controllers.
-    Initialization requires information on the local device.
-
-    :param ip='127.0.0.1': Address must be in the same subnet as the BACnet network
-        [BBMD and Foreign Device - not supported]
-
+    Create a BACnet application for building automation system communication.
+    
+    BAC0.start() is the main entry point for creating a BACnet/IP application that can
+    discover, read from, and write to BACnet devices on the network.
+    
+    Args:
+        ip: IP address and subnet mask for the BACnet interface
+        port: UDP port for BACnet communication (default: 47808)  
+        mask: Subnet mask bits (alternative to ip/mask format)
+        bbmdAddress: BBMD (BACnet Broadcast Management Device) IP address
+        bbmdTTL: Time-to-live for BBMD registration (seconds)
+        bdtable: List of BBMD addresses for broadcast distribution
+        ping: Enable automatic device ping to detect disconnections
+        ping_delay: Interval between ping attempts (seconds)
+        db_params: Database connection parameters for data logging
+        
+    Returns:
+        BAC0 application instance ready for BACnet communication
+        
+    Examples:
+        Basic usage:
+        >>> import BAC0
+        >>> bacnet = BAC0.start()  # Uses default 127.0.0.1/24
+        >>> devices = bacnet.whois()  # Discover devices
+        
+        Specify network interface:
+        >>> bacnet = BAC0.start(ip="192.168.1.100/24")
+        
+        With database logging:
+        >>> db_config = {
+        ...     "host": "localhost",
+        ...     "database": "bacnet_data",
+        ...     "user": "bacnet_user",
+        ...     "password": "secret"
+        ... }
+        >>> bacnet = BAC0.start(ip="192.168.1.100/24", db_params=db_config)
+        
+        As async context manager:
+        >>> async with BAC0.start(ip="192.168.1.100/24") as bacnet:
+        ...     devices = bacnet.whois()
+        ...     device = await BAC0.device("192.168.1.50", 1001, bacnet)
+        
+        With BBMD for remote networks:
+        >>> bacnet = BAC0.start(
+        ...     ip="192.168.1.100/24",
+        ...     bbmdAddress="192.168.10.5",
+        ...     bbmdTTL=300
+        ... )
     """
 
     def __init__(
@@ -111,9 +151,9 @@ class Lite(
         ip: t.Optional[str] = None,
         port: t.Optional[int] = None,
         mask: t.Optional[int] = None,
-        bbmdAddress=None,
+        bbmdAddress: t.Optional[str] = None,
         bbmdTTL: int = 0,
-        bdtable=None,
+        bdtable: t.Optional[t.List[str]] = None,
         ping: bool = True,
         ping_delay: int = 300,
         db_params: t.Optional[t.Dict[str, t.Union[str, int, bool]]] = None,

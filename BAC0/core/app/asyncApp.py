@@ -7,12 +7,12 @@ from bacpypes3.basetypes import BDTEntry, HostNPort
 
 from ...core.utils.notes import note_and_log
 
-
-@note_and_log
 # Type aliases for application configuration - More specific than Any
 ApplicationConfigValue = Union[str, int, bool, List[str], Dict[str, Union[str, int, bool]]]
 ApplicationConfig = Dict[str, ApplicationConfigValue]
 
+
+@note_and_log
 class BAC0Application:
     _learnedNetworks: Set = set()
     _cfg: Optional[ApplicationConfig] = None

@@ -428,13 +428,13 @@ class RPObjectsProcessing:
 class ReadPropertyMultiple(ReadUtilsMixin, DiscoveryUtilsMixin, RPMObjectsProcessing):
     async def read_multiple(
         self,
-        points_list,
+        points_list: t.List[str],
         *,
-        points_per_request=25,
-        discover_request=(None, 6),
-        force_single=False,
-        property_identifier="presentValue",
-    ):
+        points_per_request: int = 25,
+        discover_request: t.Tuple[t.Optional[t.List], int] = (None, 6),
+        force_single: bool = False,
+        property_identifier: str = "presentValue",
+    ) -> None:
         """
         Read points from a device using a ReadPropertyMultiple request.
         [ReadProperty requests are very slow in comparison].
@@ -657,8 +657,8 @@ class ReadPropertyMultiple(ReadUtilsMixin, DiscoveryUtilsMixin, RPMObjectsProces
 
 class ReadProperty(ReadUtilsMixin, DiscoveryUtilsMixin, RPObjectsProcessing):
     async def read_multiple(
-        self, points_list, *, points_per_request=1, discover_request=(None, 6)
-    ):
+        self, points_list: t.List[str], *, points_per_request: int = 1, discover_request: t.Tuple[t.Optional[t.List], int] = (None, 6)
+    ) -> None:
         """
         Functions to read points from a device using the ReadPropertyMultiple request.
         Using readProperty request can be very slow to read a lot of data.

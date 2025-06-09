@@ -29,22 +29,85 @@ class Alias:
 
     async def who_is(self, address: t.Optional[str] = None, low_limit: int = 0, high_limit: int = 4194303, timeout: int = 3) -> t.List["IAmRequest"]:
         """
-        Build a WhoIs request. WhoIs requests are sent to discover devices on the network.
-        If an address is specified, the request is sent to that address. Otherwise,
-        the request is broadcast to the local network.
-
-        :param address: (optional) The address to send the request to.
-        :param destination: (optional) The destination address.
-
-        :returns: List of IAm responses.
-
-        Example::
-
-            import BAC0
-            bacnet = BAC0.lite()
-
-            bacnet.whois()
-            bacnet.whois('2:5')
+        Discover BACnet devices on the network using Who-Is requests.
+        
+        This is the primary device discovery function in BAC0. It sends Who-Is requests
+        to discover all BACnet devices or specific devices by ID range. Discovered devices
+        respond with I-Am messages containing their device information.
+        
+        Args:
+            address: Target address for directed discovery (e.g., "192.168.1.100" or "2:5")
+                    If None, broadcasts to discover all devices on local network
+            low_limit: Minimum device instance ID to discover (default: 0)
+            high_limit: Maximum device instance ID to discover (default: 4194303)
+            timeout: Time in seconds to wait for responses (default: 3)
+            
+        Returns:
+            List of I-Am response objects containing device information:
+            - Device instance ID and vendor information
+            - Device address and network details  
+            - Object identifier and device capabilities
+            
+        Examples:
+            Basic device discovery (broadcast to all devices):
+            >>> import BAC0
+            >>> bacnet = BAC0.start(ip="192.168.1.100/24")
+            >>> devices = await bacnet.who_is()
+            >>> print(f"Found {len(devices)} devices")
+            >>> for device in devices:
+            ...     print(f"Device {device.iAmDeviceIdentifier[1]} at {device.pduSource}")
+            
+            Discover devices in specific ID range:
+            >>> devices = await bacnet.who_is(low_limit=1000, high_limit=2000)
+            >>> controllers = [d for d in devices if 1000 <= d.iAmDeviceIdentifier[1] <= 2000]
+            
+            Directed discovery to specific address:
+            >>> device = await bacnet.who_is(address="192.168.1.50")
+            >>> if device:
+            ...     print(f"Found device: {device[0].iAmDeviceIdentifier}")
+            
+            Discovery on remote network:
+            >>> remote_devices = await bacnet.who_is(address="2:5")  # Network 2, MAC 5
+            >>> for dev in remote_devices:
+            ...     print(f"Remote device: {dev.iAmDeviceIdentifier[1]}")
+            
+            Discovery with custom timeout:
+            >>> devices = await bacnet.who_is(timeout=10)  # Wait longer for slow networks
+            
+            Filter by vendor after discovery:
+            >>> devices = await bacnet.who_is()
+            >>> johnson_devices = []
+            >>> for device in devices:
+            ...     if device.vendorIdentifier == 5:  # Johnson Controls vendor ID
+            ...         johnson_devices.append(device)
+            
+            Connect to discovered devices:
+            >>> devices = await bacnet.who_is()
+            >>> for iam in devices:
+            ...     device_id = iam.iAmDeviceIdentifier[1]
+            ...     address = str(iam.pduSource)
+            ...     controller = await BAC0.device(address, device_id, bacnet)
+            ...     print(f"Connected to {controller.properties.name}")
+            
+            Discovery in automation scripts:
+            >>> async def discover_and_connect():
+            ...     async with BAC0.start(ip="192.168.1.100/24") as bacnet:
+            ...         # Discover all devices
+            ...         devices = await bacnet.who_is()
+            ...         
+            ...         # Connect to each device
+            ...         controllers = []
+            ...         for iam in devices:
+            ...             try:
+            ...                 device_id = iam.iAmDeviceIdentifier[1]
+            ...                 address = str(iam.pduSource)
+            ...                 controller = await BAC0.device(address, device_id, bacnet)
+            ...                 controllers.append(controller)
+            ...                 print(f"✓ Connected: {controller.properties.name}")
+            ...             except Exception as e:
+            ...                 print(f"✗ Failed to connect to device {device_id}: {e}")
+            ...         
+            ...         return controllers
         """
         _iams = await self.this_application.app.who_is(
             address=Address(address) if address else None,

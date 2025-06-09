@@ -81,6 +81,9 @@ from .IOExceptions import (
 
 
 ReadValue = t.Union[float, str, t.List]
+# BACnet command string format: "<address> <object_type> <instance> <property> [array_index]"
+# Examples: "192.168.1.100 analogInput 1 presentValue", "2:5 analogValue 3 presentValue"
+BACnetCommandString = str  # Structured string format for BACnet operations
 rpm_request_pattern = r"(?P<request>(?P<Object>[0-9A-Za-z-]+:\d+)[, ]+[(\[ ](?P<Properties>(?P<Property>[0-9A-Za-z-]+(\[\d+\])*[, ]*)+)[)\]]*)"
 
 
@@ -94,10 +97,10 @@ class ReadProperty:
 
     async def read(
         self,
-        args: str,
+        args: BACnetCommandString,
         arr_index: t.Optional[int] = None,
         vendor_id: int = 0,
-        bacoid=None,
+        bacoid: t.Optional[int] = None,
         timeout: int = 10,
         show_property_name: bool = False,
     ) -> t.Union[ReadValue, t.Tuple[ReadValue, str], None]:
@@ -726,7 +729,7 @@ class ReadProperty:
         return res
 
 
-def find_reason(apdu):
+def find_reason(apdu: t.Any) -> str:
     try:
         if apdu is TimeoutError:
             return "Timeout"
