@@ -15,4 +15,4 @@ __url__ = "https://github.com/ChristianTremblay/BAC0"
 __download_url__ = "https://github.com/ChristianTremblay/BAC0/archive/master.zip"
 __license__ = "LGPLv3"
 
-__version__ = "2025.06.09"
+__version__ = "2025.06.10"
