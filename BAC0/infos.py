@@ -7,7 +7,6 @@
 """
 infos.py - BAC0 Package MetaData
 """
-from . import get_version_from_pyproject
 
 __author__ = "Christian Tremblay, P.Eng."
 __email__ = "christian.tremblay@servisys.com"
