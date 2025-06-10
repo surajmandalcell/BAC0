@@ -110,8 +110,8 @@ class Discover:
             if isinstance(networks, list):
                 # we'll make multiple whois...
                 for network in networks:
-                    if network < 65535:
-                        _networks.add(network)
+                    if int(network) < 65535:
+                        _networks.add(int(network))
             elif networks == "known":
                 _networks = self.known_network_numbers.copy()
             else:

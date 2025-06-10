@@ -12,5 +12,6 @@ __author__ = "Christian Tremblay, P.Eng."
 __email__ = "christian.tremblay@servisys.com"
 __url__ = "https://github.com/ChristianTremblay/BAC0"
 __download_url__ = "https://github.com/ChristianTremblay/BAC0/archive/master.zip"
-__version__ = "2024.09.10"
 __license__ = "LGPLv3"
+
+__version__ = "2025.06.10"
