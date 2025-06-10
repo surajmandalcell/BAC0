@@ -173,7 +173,7 @@ class Device(SQLMixin):
 
     @property
     def initialized(self):
-        if isinstance(self, DeviceConnected) and self.creation_task.done():
+        if isinstance(self, DeviceConnected):
             return True
         return False
 

@@ -121,7 +121,7 @@ class Match_Value(Task):
                 await self.point._set(value=value)
         except (NotReadyError, TypeError) as error:
             self.log(
-                f"Problem executing match value task on {self.point.name} -> {value}: {error}",
+                f"Problem executing match value task on {self.point.properties.name} -> {value}: {error}",
                 level="warning",
             )
             await asyncio.sleep(1)

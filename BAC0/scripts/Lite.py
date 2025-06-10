@@ -10,6 +10,7 @@ It uses provided args to register itself as a device in the network
 and allow communication with other devices.
 
 """
+
 import asyncio
 import typing as t
 
@@ -29,6 +30,7 @@ from ..core.devices.Points import Point
 from ..core.devices.Trends import TrendLog
 from ..core.devices.Virtuals import VirtualPoint
 from ..core.functions.Alias import Alias
+from ..core.functions.CoV import COVSubscription
 
 # from ..core.functions.legacy.cov import CoV
 # from ..core.functions.legacy.DeviceCommunicationControl import (
@@ -89,7 +91,7 @@ class Lite(
     TimeSync,
     Reinitialize,
     # DeviceCommunicationControl,
-    # CoV,
+    COVSubscription,
     Schedule,
     # Calendar,
     TextMixin,
@@ -135,10 +137,17 @@ class Lite(
         # Ping task will deal with all registered device and disconnect them if they do not respond.
 
         self._ping_task = RecurringTask(
-            self.ping_registered_devices, delay=ping_delay, name="Ping Task"
+            self.ping_registered_devices,
+            delay=ping_delay,
+            name="Ping Registered Devices Task",
         )
         if ping:
             self._ping_task.start()
+
+        self._cleanup_task = RecurringTask(
+            Task.clean_tasklist, delay=60, name="Cleanup Tasks List"
+        )
+        self._cleanup_task.start()
 
         if ip is None:
             host = HostIP(port)
@@ -177,17 +186,6 @@ class Lite(
         self.bokehserver = False
         self._points_to_trend = weakref.WeakValueDictionary()
 
-        # Do what's needed to support COV
-        # self._update_local_cov_task = namedtuple(
-        #    "_update_local_cov_task", ["task", "running"]
-        # )
-        # self._update_local_cov_task.task = Update_local_COV(
-        #    self, delay=1, name="Update Local COV Task"
-        # )
-        # self._update_local_cov_task.task.start()
-        # self._update_local_cov_task.running = True
-        # self.log("Update Local COV Task started (required to support COV)", level="info")
-
         # Activate InfluxDB if params are available
         if db_params and INFLUXDB:
             try:
@@ -204,7 +202,8 @@ class Lite(
                     "Unable to connect to InfluxDB. Please validate parameters"
                 )
         if self.database:
-            self.create_save_to_influxdb_task(delay=20)
+            write_interval = db_params.get("write_interval", 60)
+            self.create_save_to_influxdb_task(delay=write_interval)
 
         # Announce yourself
 
@@ -228,12 +227,12 @@ class Lite(
     def create_save_to_influxdb_task(self, delay: int = 60) -> None:
         self._write_to_db = RecurringTask(
             self.save_registered_devices_to_db,
-            delay=60,
+            delay=delay,
             name="Write to InfluxDB Task",
         )
         self._write_to_db.start()
 
-    async def save_registered_devices_to_db(self):
+    async def save_registered_devices_to_db(self, delay: int = 60) -> None:
         if len(self.registered_devices) > 0:
             for each in self.registered_devices:
                 try:
@@ -246,7 +245,7 @@ class Lite(
                     self.log(
                         "Write to InfluxDB Task stopped. Restarting", level="warning"
                     )
-                    self.create_save_to_influxdb_task(delay=20)
+                    self.create_save_to_influxdb_task(delay=delay)
 
     def register_device(
         self, device: t.Union[RPDeviceConnected, RPMDeviceConnected]
@@ -501,3 +500,48 @@ class Lite(
                 return each
         self._log.error(f"Device {id} not found")
         raise ValueError("Device not found")
+
+    def cov(
+        self,
+        address: str = None,
+        objectID: t.Tuple[str, int] = None,
+        lifetime: int = 900,
+        confirmed: bool = False,
+        callback: t.Optional[
+            t.Union[t.Callable[[str, t.Any], None], t.Awaitable[None]]
+        ] = None,
+    ):
+        """
+        Subscribe to COV notification for a given address and objectID
+        If callback is provided, it will be called with the value of the COV notification
+        So the function must be built to accept two arguments : property_identifier and property_value
+        """
+        cov_task = COVSubscription(
+            address=address,
+            objectID=objectID,
+            confirmed=confirmed,
+            lifetime=lifetime,
+            callback=callback,
+            BAC0App=self,
+        )
+        Base._running_cov_tasks[cov_task.process_identifier] = cov_task
+        cov_task.task = asyncio.create_task(cov_task.run())
+        self.log(
+            f"COV subscription for {address}|{objectID} with id {cov_task.process_identifier} started",
+            level="info",
+        )
+
+    def cancel_cov(self, task_id: int):
+        self.log(f"Canceling COV subscription id {task_id}", level="info")
+        process_identifer = task_id
+
+        if process_identifer not in Base._running_cov_tasks:
+            self.log(f"Task {process_identifer} not found", level="warning")
+            return
+        cov_subscription = Base._running_cov_tasks.pop(process_identifer)
+        cov_subscription.stop()
+        # await cov_subscription.task
+
+    @property
+    def cov_tasks(self):
+        return Base._running_cov_tasks

@@ -21,6 +21,7 @@ from bacpypes3.pdu import Address
 # --- 3rd party modules ---
 from bacpypes3.primitivedata import Boolean, CharacterString, ObjectIdentifier
 
+from ...scripts.Base import Base
 from ...tasks.Match import Match, Match_Value
 
 # --- this application's modules ---
@@ -78,8 +79,6 @@ class Point:
     """
 
     _cache_delta = timedelta(seconds=5)
-    _last_cov_identifier = 0
-    _running_cov_tasks = {}
 
     def __init__(
         self,
@@ -430,7 +429,8 @@ class Point:
             or force is not False
         ):
             await self.properties.device.properties.network.sim(
-                f"{self.properties.device.properties.address} {self.properties.type} {self.properties.address} presentValue {value}"
+                f"{self.properties.device.properties.address} {self.properties.type} {self.properties.address} presentValue {value}",
+                vendor_id=self.properties.device.properties.vendor_id,
             )
             self.properties.simulated = (True, value)
 
@@ -625,7 +625,9 @@ class Point:
         """
         return len(self.history)
 
-    async def subscribe_cov(self, confirmed: bool = False, lifetime: int = 900):
+    async def subscribe_cov(
+        self, confirmed: bool = False, lifetime: int = 900, callback=None
+    ):
         """
         Subscribes to the Change of Value (COV) service for this point.
 
@@ -646,20 +648,20 @@ class Point:
         Returns:
             None
         """
-        self.cov_task = COVSubscription(
-            point=self, confirmed=confirmed, lifetime=lifetime
+        self.cov_task = COVPointSubscription(
+            point=self, confirmed=confirmed, lifetime=lifetime, callback=callback
         )
-        Point._running_cov_tasks[self.cov_task.process_identifier] = self.cov_task
+        Base._running_cov_tasks[self.cov_task.process_identifier] = self.cov_task
         self.cov_task.task = asyncio.create_task(self.cov_task.run())
 
     async def cancel_cov(self):
         self.log(f"Canceling COV subscription for {self.properties.name}", level="info")
         process_identifer = self.cov_task.process_identifier
 
-        if process_identifer not in Point._running_cov_tasks:
+        if process_identifer not in Base._running_cov_tasks:
             await self.response("COV subscription not found")
             return
-        cov_subscription = Point._running_cov_tasks.pop(process_identifer)
+        cov_subscription = Base._running_cov_tasks.pop(process_identifer)
         cov_subscription.stop()
         # await cov_subscription.task
 
@@ -778,7 +780,7 @@ class NumericPoint(Point):
                 raise WritePropertyException(f"Problem writing to device : {error}")
 
     def __repr__(self):
-        val = self.lastValue if self.lastValue is not None else "NaN"
+        val = self.lastValue if self.lastValue is not None else float("nan")
         return f"{self.properties.device.properties.name}/{self.properties.name} : {val:.2f} {self.properties.units_state}"
 
     def __add__(self, other):
@@ -1430,9 +1432,43 @@ class StringPointOffline(EnumPoint):
         raise OfflineException("Must be online to write")
 
 
-class COVSubscription:
+class COVPointSubscription:
+    """
+    COVPointSubscription is a class that handles Change of Value (COV) subscriptions for BACnet points.
+    It allows subscribing to COV notifications for a specific point, and handles the asynchronous
+    communication with the BACnet device to receive these notifications.
+
+    Attributes:
+        address (Address): The BACnet address of the device.
+        cov_fini (asyncio.Event): An event to signal the end of the COV subscription.
+        task (asyncio.Task): The asyncio task that runs the COV subscription.
+        obj_identifier (ObjectIdentifier): The BACnet object identifier for the point.
+        _app (BACnetApplication): The BACnet application instance.
+        process_identifier (int): The process identifier for the COV subscription.
+        point (Point): The `BAC0.point` for which the COV subscription is created.
+        lifetime (int): The lifetime of the COV subscription in seconds.
+        confirmed (bool): Whether the COV notifications should be confirmed.
+        callback (Optional[Union[Callable[[str, Any], None], Awaitable[None]]]): The callback function to be called when a COV notification is received.
+
+    Methods:
+        __init__(self, point: Point, lifetime: int = 900, confirmed: bool = False, callback: Optional[Union[Callable[[str, Any], None], Awaitable[None]]] = None):
+            Initializes the COVPointSubscription instance.
+
+        run(self):
+            Asynchronously runs the COV subscription, listening for COV notifications and calling the callback function if provided.
+
+        stop(self):
+            Stops the COV subscription by setting the cov_fini event.
+    """
+
     def __init__(
-        self, point: Point = None, lifetime: int = 900, confirmed: bool = False
+        self,
+        point: Point = None,
+        lifetime: int = 900,
+        confirmed: bool = False,
+        callback: t.Optional[
+            t.Union[t.Callable[[str, t.Any], None], t.Awaitable[None]]
+        ] = None,
     ):
         self.address = Address(point.properties.device.properties.address)
         self.cov_fini = asyncio.Event()
@@ -1441,17 +1477,18 @@ class COVSubscription:
             (point.properties.type, int(point.properties.address))
         )
         self._app = point.properties.device.properties.network.this_application.app
-        self.process_identifier = Point._last_cov_identifier + 1
-        Point._last_cov_identifier = self.process_identifier
+        self.process_identifier = Base._last_cov_identifier + 1
+        Base._last_cov_identifier = self.process_identifier
 
         self.point = point
         self.lifetime = lifetime
         self.confirmed = confirmed
+        self.callback = callback
 
     async def run(self):
         self.point.cov_registered = True
         self.point.log(
-            f"Subscribing to COV for {self.point.properties.name}", level="info"
+            f"Subscribing to COV for {self.point.properties.name}", level="debug"
         )
 
         try:
@@ -1481,7 +1518,7 @@ class COVSubscription:
                             level="info",
                         )
                         if property_identifier == PropertyIdentifier.presentValue:
-                            val = extract_value_from_primitive_data(property_value)
+                            val = Base.extract_value_from_primitive_data(property_value)
                             self.point._trend(val)
                         elif property_identifier == PropertyIdentifier.statusFlags:
                             self.point.properties.status_flags = property_value
@@ -1489,6 +1526,26 @@ class COVSubscription:
                             self.point._log.warning(
                                 f"Unsupported COV property identifier {property_identifier}"
                             )
+                        if callable(self.callback):
+                            self.point.log(
+                                f"Calling callback for {self.point.properties.name}",
+                                level="debug",
+                            )
+                            if asyncio.iscoroutinefunction(self.callback):
+                                await self.callback(
+                                    property_identifier=property_identifier,
+                                    property_value=property_value,
+                                )
+                            elif hasattr(self.callback, "__call__"):
+                                self.callback(
+                                    property_identifier=property_identifier,
+                                    property_value=property_value,
+                                )
+                            else:
+                                self.point.log(
+                                    f"Callback {self.callback} is not callable",
+                                    level="error",
+                                )
                 await cov_fini_task_monitor
         except Exception as e:
             self.point.log(f"Error in COV subscription : {e}", level="error")

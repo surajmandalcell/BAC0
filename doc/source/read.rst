@@ -83,6 +83,12 @@ Once you know the device you need to read from, you can use ::
 
     bacnet.read('address object object_instance property')
 
+    Read the present value property on analog value instance 4410 on network 303 device 9
+    bacnet.read('303:9 analogValue 4410 presentValue')
+
+    Read the present value property on analog value instance 4410 on device with IP 192.168.1.100
+    bacnet.read('192.168.1.100 analogValue 4410 presentValue')
+
 Read property multiple can also be used ::
 
     bacnet.readMultiple('address object object_instance property_1 property_2') #or
