@@ -536,6 +536,118 @@ class Lite(
             f"{self.localObjName}|{self.Boid} disconnected. Exiting context manager."
         )
 
+    async def device(
+        self,
+        address: t.Optional[str] = None,
+        device_id: t.Optional[int] = None,
+        network: t.Optional[t.Any] = None,
+        *,
+        poll: int = 10,
+        from_backup: t.Optional[str] = None,
+        segmentation_supported: bool = True,
+        object_list: t.Optional[t.List[t.Tuple[str, int]]] = None,
+        auto_save: bool = False,
+        save_resampling: str = "1s",
+        clear_history_on_save: bool = False,
+        history_size: t.Optional[int] = None,
+        reconnect_on_failure: bool = True,
+    ) -> t.Union[RPDeviceConnected, RPMDeviceConnected]:
+        """
+        Create and connect to a BACnet device for reading/writing points.
+        
+        This is the primary function for establishing communication with BACnet devices.
+        Once connected, you can read/write points, access device properties, and monitor
+        data changes through polling or COV (Change of Value) subscriptions.
+        
+        Args:
+            address: Device IP address or network address
+            device_id: BACnet device instance ID (unique identifier)
+            network: BACnet network instance (usually from BAC0.start())
+            poll: Automatic polling interval in seconds (0 = no polling)
+            from_backup: SQLite backup file to restore device configuration
+            segmentation_supported: Enable large message segmentation (default: True)
+            object_list: Pre-defined list of device objects to skip discovery
+            auto_save: Automatically save point histories to database
+            save_resampling: Data resampling interval for database saves
+            clear_history_on_save: Clear in-memory history after saving
+            history_size: Maximum number of historical points to retain
+            reconnect_on_failure: Auto-reconnect when device becomes unreachable
+            
+        Returns:
+            Connected BACnet device ready for point operations
+            
+        Examples:
+            Basic device connection:
+            >>> async with BAC0.start(ip="192.168.1.100/24") as bacnet:
+            ...     device = await bacnet.device("192.168.1.50", 1001)
+            ...     print(device.points)  # Show all discovered points
+            
+            Connect with specific polling:
+            >>> device = await bacnet.device(
+            ...     address="192.168.1.50",
+            ...     device_id=1001,
+            ...     poll=30  # Poll every 30 seconds
+            ... )
+            
+            Connect and read points immediately:
+            >>> device = await bacnet.device("192.168.1.50", 1001)
+            >>> temp = device["Temperature"]  # Access point by name
+            >>> print(f"Current temperature: {temp.value}")
+            
+            Connect with database auto-save:
+            >>> device = await bacnet.device(
+            ...     "192.168.1.50", 1001,
+            ...     auto_save=True,
+            ...     save_resampling="5min",  # Save every 5 minutes
+            ...     history_size=1000       # Keep last 1000 readings
+            ... )
+            
+            Connect using network notation:
+            >>> # For devices on different BACnet networks
+            >>> device = await bacnet.device("2:50", 1001)  # Network 2, MAC 50
+            
+            Restore from backup:
+            >>> device = await bacnet.device(
+            ...     from_backup="device_backup.db"
+            ... )
+            
+            Read and write operations:
+            >>> device = await bacnet.device("192.168.1.50", 1001)
+            >>> 
+            >>> # Read current values
+            >>> setpoint = device["Room_Temp_Setpoint"].value
+            >>> status = device["Fan_Status"].value
+            >>> 
+            >>> # Write new values  
+            >>> device["Room_Temp_Setpoint"].write(72.5)
+            >>> device["Fan_Command"].write("On")
+            >>> 
+            >>> # Access point history
+            >>> history = device["Temperature"].history
+            >>> print(f"Last 10 readings: {history.tail(10)}")
+        """
+        # Import here to avoid circular imports
+        from BAC0.core.devices.Device import device as create_device
+        
+        # Use this instance as the network if no network is provided
+        if network is None:
+            network = self
+            
+        return await create_device(
+            address=address,
+            device_id=device_id,
+            network=network,
+            poll=poll,
+            from_backup=from_backup,
+            segmentation_supported=segmentation_supported,
+            object_list=object_list,
+            auto_save=auto_save,
+            save_resampling=save_resampling,
+            clear_history_on_save=clear_history_on_save,
+            history_size=history_size,
+            reconnect_on_failure=reconnect_on_failure,
+        )
+
     def get_device_by_id(self, id: int) -> t.Union[RPDeviceConnected, RPMDeviceConnected]:
         for each in self.registered_devices:
             if each.properties.device_id == id:
